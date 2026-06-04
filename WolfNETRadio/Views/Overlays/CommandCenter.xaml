@@ -1,0 +1,58 @@
+<Window x:Class="WolfNETRadio.Views.Overlays.CommandCenter"
+        x:Name="RootWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:WolfNETRadio.Views.Controls"
+        mc:Ignorable="d"
+        Width="880" Height="270"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Topmost="True"
+        ResizeMode="CanResizeWithGrip"
+        Background="{StaticResource BgDeepBrush}">
+
+    <Border Background="{StaticResource BgDeepBrush}"
+            BorderBrush="{StaticResource BorderSubtleBrush}"
+            BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="20" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Style="{StaticResource OverlayTitleBar}" MouseDown="TitleBar_MouseDown">
+                <Grid ColumnDefinitions="*,15,15" ColumnSpacing="4">
+                    <TextBlock Style="{StaticResource OverlayTitleText}" Text="▶ COMMAND CENTER" />
+                    <Button Grid.Column="1" Style="{StaticResource OverlayWindowButton}" Content="–" Click="Minimize_Click" />
+                    <Button Grid.Column="2" Style="{StaticResource OverlayCloseButton}" Content="✕" Click="Close_Click" />
+                </Grid>
+            </Border>
+
+            <UniformGrid Grid.Row="1" Columns="5" Rows="2" Margin="6" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <controls:RadioSlotControl RadioId="1" SlotLabelText="CH-1" Width="168" Height="100" />
+                <controls:RadioSlotControl RadioId="2" SlotLabelText="CH-2" Width="168" Height="100" />
+                <controls:RadioSlotControl RadioId="3" SlotLabelText="CH-3" Width="168" Height="100" />
+                <controls:RadioSlotControl RadioId="4" SlotLabelText="CH-4" Width="168" Height="100" />
+                <controls:RadioSlotControl RadioId="5" SlotLabelText="CH-5" Width="168" Height="100" />
+                <controls:RadioSlotControl RadioId="6" SlotLabelText="CH-6" Width="168" Height="100" />
+                <controls:RadioSlotControl RadioId="7" SlotLabelText="CH-7" Width="168" Height="100" />
+                <controls:RadioSlotControl RadioId="8" SlotLabelText="CH-8" Width="168" Height="100" />
+                <controls:RadioSlotControl RadioId="9" SlotLabelText="CH-9" Width="168" Height="100" />
+                <controls:RadioSlotControl RadioId="10" SlotLabelText="CH-10" Width="168" Height="100" />
+            </UniformGrid>
+
+            <Separator Grid.Row="2" Margin="6,0" />
+
+            <Grid Grid.Row="3" Margin="6" ColumnDefinitions="180,*" VerticalAlignment="Center">
+                <controls:RadioSlotControl RadioId="0" SlotLabelText="INTERCOM" Width="168" Height="60" ShowStepButtons="False" />
+                <Slider Grid.Column="1" Width="140" Minimum="0.3" Maximum="1"
+                        Value="{Binding ElementName=RootWindow, Path=Opacity, Mode=TwoWay}"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

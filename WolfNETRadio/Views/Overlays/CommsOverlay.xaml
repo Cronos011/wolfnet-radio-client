@@ -1,0 +1,50 @@
+<Window x:Class="WolfNETRadio.Views.Overlays.CommsOverlay"
+        x:Name="RootWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:WolfNETRadio.Views.Controls"
+        mc:Ignorable="d"
+        Width="200" Height="500"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Topmost="True"
+        ResizeMode="CanResizeWithGrip"
+        Background="{StaticResource BgDeepBrush}">
+
+    <Border Background="{StaticResource BgDeepBrush}"
+            BorderBrush="{StaticResource BorderSubtleBrush}"
+            BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="20" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Style="{StaticResource OverlayTitleBar}" MouseDown="TitleBar_MouseDown">
+                <Grid ColumnDefinitions="*,15,15" ColumnSpacing="4">
+                    <TextBlock Style="{StaticResource OverlayTitleText}" Text="▶ COMMS ARRAY" />
+                    <Button Grid.Column="1" Style="{StaticResource OverlayWindowButton}" Content="–" Click="Minimize_Click" />
+                    <Button Grid.Column="2" Style="{StaticResource OverlayCloseButton}" Content="✕" Click="Close_Click" />
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Row="1" Margin="6" Spacing="6">
+                <controls:RadioSlotControl RadioId="1" SlotLabelText="CH-1" Style="{StaticResource RadioSlotStyle}" />
+                <controls:RadioSlotControl RadioId="2" SlotLabelText="CH-2" Style="{StaticResource RadioSlotStyle}" />
+                <controls:RadioSlotControl RadioId="3" SlotLabelText="CH-3" Style="{StaticResource RadioSlotStyle}" />
+
+                <Separator />
+
+                <controls:RadioSlotControl RadioId="0" SlotLabelText="INTERCOM" Height="60" ShowStepButtons="False" Style="{StaticResource RadioSlotStyle}" />
+
+                <Separator />
+
+                <Slider Width="140" Minimum="0.3" Maximum="1"
+                        Value="{Binding ElementName=RootWindow, Path=Opacity, Mode=TwoWay}"
+                        HorizontalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,140 @@
+<UserControl x:Class="WolfNETRadio.Views.Controls.RadioSlotControl"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="118"
+             d:DesignWidth="190">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <Style x:Key="StepUpButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource BgInputBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource GoldBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+            <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+            <Setter Property="FontSize" Value="7" />
+            <Setter Property="Padding" Value="2,1" />
+        </Style>
+
+        <Style x:Key="StepDownButtonStyle" TargetType="Button" BasedOn="{StaticResource StepUpButtonStyle}">
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+        </Style>
+
+        <Style x:Key="ChannelDisplayStyle" TargetType="TextBox" BasedOn="{StaticResource ChannelDisplay}">
+            <Setter Property="Background" Value="{StaticResource BgDeepBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource CyanBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsTransmitting, ElementName=Root}" Value="False">
+                    <Setter Property="Foreground" Value="{StaticResource CyanDimBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ActiveIndicatorStyle" TargetType="Ellipse">
+            <Setter Property="Fill" Value="{StaticResource BorderSubtleBrush}" />
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Height" Value="8" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsActive, ElementName=Root}" Value="True">
+                    <Setter Property="Fill" Value="{StaticResource GreenActiveBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Border Background="{StaticResource BgPanelBrush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}"
+                BorderThickness="1" />
+
+        <!-- Corner brackets -->
+        <Border Width="8" Height="8" BorderBrush="{StaticResource GoldBrush}" BorderThickness="2,2,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
+        <Border Width="8" Height="8" BorderBrush="{StaticResource GoldBrush}" BorderThickness="0,2,2,0" HorizontalAlignment="Right" VerticalAlignment="Top" />
+        <Border Width="8" Height="8" BorderBrush="{StaticResource GoldBrush}" BorderThickness="2,0,0,2" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+        <Border Width="8" Height="8" BorderBrush="{StaticResource GoldBrush}" BorderThickness="0,0,2,2" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+
+        <Grid Margin="4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="16" />
+                <RowDefinition Height="32" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="18" />
+                <RowDefinition Height="22" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" Background="{StaticResource BgDeepBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1" Padding="4,0">
+                <Grid>
+                    <TextBlock x:Name="PART_SlotLabel"
+                               Text="{Binding SlotLabelText, ElementName=Root}"
+                               Foreground="{StaticResource GoldBrush}"
+                               FontFamily="{StaticResource MonoFont}"
+                               FontSize="9"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="PART_TunedCount"
+                                   Text="{Binding TunedClientCount, ElementName=Root, StringFormat=👤 {0}}"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontFamily="{StaticResource MonoFont}"
+                                   FontSize="8" />
+                        <Ellipse x:Name="PART_ActiveIndicator" Style="{StaticResource ActiveIndicatorStyle}" MouseDown="ActiveIndicator_MouseDown" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Channel Display -->
+            <TextBox x:Name="PART_ChannelDisplay"
+                     Grid.Row="1"
+                     Style="{StaticResource ChannelDisplayStyle}"
+                     Text="{Binding ChannelCode, ElementName=Root, StringFormat={}{0:D4}}"
+                     GotFocus="ChannelDisplay_GotFocus"
+                     LostFocus="ChannelDisplay_LostFocus"
+                     KeyDown="ChannelDisplay_KeyDown" />
+
+            <!-- Step Up -->
+            <UniformGrid Grid.Row="2" Columns="4" Visibility="{Binding ShowStepButtons, ElementName=Root, Converter={StaticResource BoolToVis}}">
+                <Button x:Name="PART_StepUp1000" Style="{StaticResource StepUpButtonStyle}" Content="+1000" Click="StepUp1000_Click" />
+                <Button x:Name="PART_StepUp100" Style="{StaticResource StepUpButtonStyle}" Content="+100" Click="StepUp100_Click" />
+                <Button x:Name="PART_StepUp10" Style="{StaticResource StepUpButtonStyle}" Content="+10" Click="StepUp10_Click" />
+                <Button x:Name="PART_StepUp1" Style="{StaticResource StepUpButtonStyle}" Content="+1" Click="StepUp1_Click" />
+            </UniformGrid>
+
+            <!-- Step Down -->
+            <UniformGrid Grid.Row="3" Columns="4" Visibility="{Binding ShowStepButtons, ElementName=Root, Converter={StaticResource BoolToVis}}">
+                <Button x:Name="PART_StepDown1000" Style="{StaticResource StepDownButtonStyle}" Content="-1000" Click="StepDown1000_Click" />
+                <Button x:Name="PART_StepDown100" Style="{StaticResource StepDownButtonStyle}" Content="-100" Click="StepDown100_Click" />
+                <Button x:Name="PART_StepDown10" Style="{StaticResource StepDownButtonStyle}" Content="-10" Click="StepDown10_Click" />
+                <Button x:Name="PART_StepDown1" Style="{StaticResource StepDownButtonStyle}" Content="-1" Click="StepDown1_Click" />
+            </UniformGrid>
+
+            <!-- Volume + Retransmit -->
+            <Grid Grid.Row="4" ColumnDefinitions="*,26" ColumnSpacing="4">
+                <Slider x:Name="PART_VolumeSlider"
+                        Minimum="0" Maximum="100"
+                        Value="{Binding Volume, ElementName=Root, Mode=TwoWay}"
+                        DragCompleted="VolumeSlider_DragCompleted" />
+                <Button x:Name="PART_RetransmitButton" Grid.Column="1" Content="RT" Click="RetransmitButton_Click" />
+            </Grid>
+
+            <!-- Tabs -->
+            <TabControl Grid.Row="5" Padding="0">
+                <TabItem Header="RADIO">
+                    <Grid Background="{StaticResource BgDeepBrush}" />
+                </TabItem>
+                <TabItem Header="PRESETS">
+                    <ContentPresenter x:Name="PART_PresetsPanel" />
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,207 @@
+<Window x:Class="WolfNETRadio.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:WolfNETRadio.Views.Controls"
+        mc:Ignorable="d"
+        Title="WolfNET Radio"
+        Icon="/Assets/wolfnet-radio.ico"
+        Width="600" Height="680"
+        WindowStyle="SingleBorderWindow"
+        Background="{StaticResource BgDeepBrush}">
+
+    <Window.Resources>
+        <Style x:Key="OverlayToggleStyle" TargetType="ToggleButton">
+            <Setter Property="Background" Value="{StaticResource BgInputBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource GoldBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+            <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource BgHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Background" Value="{StaticResource BgPanelBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <TabControl>
+            <TabItem Header="CONNECT">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{StaticResource BgDeepBrush}">
+                    <StackPanel Margin="10" Spacing="10">
+                        <StackPanel>
+                            <Label Content="SERVER ADDRESS" />
+                            <TextBox Text="gwrecon.com:5002" />
+                        </StackPanel>
+
+                        <StackPanel>
+                            <Label Content="RADIO ACCESS KEY" />
+                            <PasswordBox />
+                        </StackPanel>
+
+                        <Button Content="CONNECT / DISCONNECT" FontSize="14" Height="36" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Ellipse Width="8" Height="8" Fill="{StaticResource GreenActiveBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text="SERVER" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Ellipse Width="8" Height="8" Fill="{StaticResource RedDangerBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text="VOIP" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Separator />
+
+                        <StackPanel>
+                            <Label Content="INPUT DEVICE" />
+                            <ComboBox />
+                        </StackPanel>
+
+                        <StackPanel>
+                            <Label Content="OUTPUT DEVICE" />
+                            <ComboBox />
+                        </StackPanel>
+
+                        <StackPanel>
+                            <Label Content="MIC LEVEL" />
+                            <controls:VUMeterControl />
+                        </StackPanel>
+
+                        <StackPanel>
+                            <Label Content="SPEAKER VOLUME" />
+                            <Slider Minimum="0" Maximum="100" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="RADIOS">
+                <StackPanel Margin="10" Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <ToggleButton Style="{StaticResource OverlayToggleStyle}" Content="COMMS ARRAY" Width="200" Height="48" />
+                        <ToggleButton Style="{StaticResource OverlayToggleStyle}" Content="COMMAND CENTER" Width="200" Height="48" />
+                    </StackPanel>
+                    <TextBlock Text="CONNECTED CLIENTS: 0" Foreground="{StaticResource TextMutedBrush}" />
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="CONTROLS">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{StaticResource BgDeepBrush}">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="80" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="CH-1" />
+                        <Button Grid.Row="0" Grid.Column="1" Content="[UNBOUND]" />
+                        <Button Grid.Row="0" Grid.Column="2" Content="CLEAR" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="CH-2" />
+                        <Button Grid.Row="1" Grid.Column="1" Content="[UNBOUND]" />
+                        <Button Grid.Row="1" Grid.Column="2" Content="CLEAR" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="CH-3" />
+                        <Button Grid.Row="2" Grid.Column="1" Content="[UNBOUND]" />
+                        <Button Grid.Row="2" Grid.Column="2" Content="CLEAR" />
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="CH-4" />
+                        <Button Grid.Row="3" Grid.Column="1" Content="[UNBOUND]" />
+                        <Button Grid.Row="3" Grid.Column="2" Content="CLEAR" />
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="CH-5" />
+                        <Button Grid.Row="4" Grid.Column="1" Content="[UNBOUND]" />
+                        <Button Grid.Row="4" Grid.Column="2" Content="CLEAR" />
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="CH-6" />
+                        <Button Grid.Row="5" Grid.Column="1" Content="[UNBOUND]" />
+                        <Button Grid.Row="5" Grid.Column="2" Content="CLEAR" />
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="CH-7" />
+                        <Button Grid.Row="6" Grid.Column="1" Content="[UNBOUND]" />
+                        <Button Grid.Row="6" Grid.Column="2" Content="CLEAR" />
+
+                        <TextBlock Grid.Row="7" Grid.Column="0" Text="CH-8" />
+                        <Button Grid.Row="7" Grid.Column="1" Content="[UNBOUND]" />
+                        <Button Grid.Row="7" Grid.Column="2" Content="CLEAR" />
+
+                        <TextBlock Grid.Row="8" Grid.Column="0" Text="CH-9" />
+                        <Button Grid.Row="8" Grid.Column="1" Content="[UNBOUND]" />
+                        <Button Grid.Row="8" Grid.Column="2" Content="CLEAR" />
+
+                        <TextBlock Grid.Row="9" Grid.Column="0" Text="CH-10" />
+                        <Button Grid.Row="9" Grid.Column="1" Content="[UNBOUND]" />
+                        <Button Grid.Row="9" Grid.Column="2" Content="CLEAR" />
+
+                        <TextBlock Grid.Row="10" Grid.Column="0" Text="COMMON" />
+                        <Button Grid.Row="10" Grid.Column="1" Content="[UNBOUND]" />
+                        <Button Grid.Row="10" Grid.Column="2" Content="CLEAR" />
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="SETTINGS">
+                <StackPanel Margin="10" Spacing="10">
+                    <CheckBox Content="Radio Effects" />
+                    <CheckBox Content="Start Minimized" />
+                    <CheckBox Content="Start With Overlays Visible" />
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="HELP">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{StaticResource BgDeepBrush}">
+                    <StackPanel Margin="10" Spacing="10">
+                        <TextBlock Text="GETTING STARTED" Foreground="{StaticResource GoldBrush}" FontWeight="Bold" />
+                        <TextBlock Text="Enter your server address and access key, then connect. Verify the SERVER and VOIP indicators turn green before transmitting." />
+
+                        <TextBlock Text="CHANNEL CODES" Foreground="{StaticResource GoldBrush}" FontWeight="Bold" Margin="0,6,0,0" />
+                        <TextBlock Text="Channel codes are four-digit frequencies. Use the step buttons or direct entry to tune each radio slot." />
+
+                        <TextBlock Text="PUSH TO TALK" Foreground="{StaticResource GoldBrush}" FontWeight="Bold" Margin="0,6,0,0" />
+                        <TextBlock Text="Assign PTT bindings per channel and a common PTT. Press a binding button to capture the next keypress." />
+
+                        <TextBlock Text="RADIO OVERLAY" Foreground="{StaticResource GoldBrush}" FontWeight="Bold" Margin="0,6,0,0" />
+                        <TextBlock Text="Toggle COMMS ARRAY or COMMAND CENTER to show overlay windows. Use the opacity slider to blend with the cockpit HUD." />
+
+                        <TextBlock Text="TROUBLESHOOTING" Foreground="{StaticResource GoldBrush}" FontWeight="Bold" Margin="0,6,0,0" />
+                        <TextBlock Text="If audio is silent, confirm the correct input/output devices and check that VOIP is connected." />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
