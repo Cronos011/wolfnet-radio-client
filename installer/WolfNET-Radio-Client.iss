@@ -5,7 +5,7 @@
 #define AppExeName "WolfNETRadio.exe"
 
 [Setup]
-AppId={{B1C2D3E4-F5A6-7890-BCDE-F12345678901}
+AppId={{B1C2D3E4-F5A6-7890-BCDE-F12345678901}}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}
