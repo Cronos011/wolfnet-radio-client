@@ -1,0 +1,62 @@
+name: WolfNET Radio Client Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT: WolfNETRadio/WolfNETRadio.csproj
+
+jobs:
+  build:
+    name: Build Client (Windows x64)
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore ${{ env.PROJECT }}
+
+      - name: Build
+        run: dotnet build ${{ env.PROJECT }} --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish ${{ env.PROJECT }} --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true --output publish/
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: echo "tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Build Installer
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.4
+        with:
+          path: installer/WolfNET-Radio-Client.iss
+          options: /DAppVersion=${{ steps.version.outputs.tag }}
+
+      - name: Upload installer artifact
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: WolfNET-Radio-Setup
+          path: installer/Output/WolfNET-Radio-Client-Setup.exe
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            installer/Output/WolfNET-Radio-Client-Setup.exe
+            publish/WolfNETRadio.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
