@@ -52,7 +52,11 @@
 
             <Separator Grid.Row="2" Margin="6,0" />
 
-            <Grid Grid.Row="3" Margin="6" ColumnDefinitions="180,*" VerticalAlignment="Center">
+            <Grid Grid.Row="3" Margin="6" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="180" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
                 <controls:RadioSlotControl RadioId="0" SlotLabelText="INTERCOM" Width="168" Height="60" ShowStepButtons="False" />
                 <Slider Grid.Column="1" Width="140" Minimum="0.3" Maximum="1"
                         Value="{Binding ElementName=RootWindow, Path=Opacity, Mode=TwoWay}"

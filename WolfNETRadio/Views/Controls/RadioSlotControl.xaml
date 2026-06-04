@@ -118,7 +118,11 @@
             </UniformGrid>
 
             <!-- Volume + Retransmit -->
-            <Grid Grid.Row="4" ColumnDefinitions="*,26" Column>
+            <Grid Grid.Row="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="26" />
+                    </Grid.ColumnDefinitions>
                 <Slider x:Name="PART_VolumeSlider"
                         Minimum="0" Maximum="100"
                         Value="{Binding Volume, ElementName=Root, Mode=TwoWay}"

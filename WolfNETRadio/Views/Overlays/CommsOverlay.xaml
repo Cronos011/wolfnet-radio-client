@@ -35,7 +35,7 @@
                 </Grid>
             </Border>
 
-            <StackPanel Grid.Row="1" Margin="6" Spacing="6">
+            <StackPanel Grid.Row="1" Margin="6">
                 <controls:RadioSlotControl RadioId="1" SlotLabelText="CH-1" Style="{StaticResource RadioSlotStyle}" />
                 <controls:RadioSlotControl RadioId="2" SlotLabelText="CH-2" Style="{StaticResource RadioSlotStyle}" />
                 <controls:RadioSlotControl RadioId="3" SlotLabelText="CH-3" Style="{StaticResource RadioSlotStyle}" />
