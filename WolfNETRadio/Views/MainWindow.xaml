@@ -110,6 +110,9 @@
                                     FontFamily="Segoe UI" FontSize="12" FontWeight="Bold"
                                     Click="ConnectButton_Click" />
                         </Grid>
+                        <!-- Status message -->
+                        <TextBlock x:Name="StatusLabel" Text="" FontFamily="Consolas" FontSize="10"
+                                   Foreground="#8A96A8" Margin="0,8,0,0" TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
 
@@ -335,6 +338,102 @@
                             </Grid>
                         </StackPanel>
                     </StackPanel>
+                </Border>
+
+                <!-- ── Card: Settings ─────────────────────────────────── -->
+                <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1" Margin="0,0,0,12" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="⚙  SETTINGS" FontSize="11" FontWeight="Bold"
+                                   Foreground="#4FC3F7" FontFamily="Segoe UI" Margin="0,0,0,10" />
+
+                        <!-- Radio effects toggle -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="Radio Effects" FontSize="11" Foreground="#EDF2F8" FontFamily="Segoe UI" />
+                                <TextBlock Text="Applies distortion and static to received audio" FontSize="10"
+                                           Foreground="#8A96A8" FontFamily="Segoe UI" />
+                            </StackPanel>
+                            <CheckBox x:Name="RadioEffectsCheck" Grid.Column="1" IsChecked="True"
+                                      VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </Grid>
+
+                        <!-- Speaker volume -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Speaker Volume" FontSize="11"
+                                       Foreground="#8A96A8" FontFamily="Segoe UI" VerticalAlignment="Center" />
+                            <Slider x:Name="SpeakerVolumeSlider" Grid.Column="1"
+                                    Minimum="0" Maximum="100" Value="100"
+                                    Height="20" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Mic volume -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Mic Boost" FontSize="11"
+                                       Foreground="#8A96A8" FontFamily="Segoe UI" VerticalAlignment="Center" />
+                            <Slider x:Name="MicBoostSlider" Grid.Column="1"
+                                    Minimum="0" Maximum="200" Value="100"
+                                    Height="20" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Start minimized -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Start minimized" FontSize="11"
+                                       Foreground="#EDF2F8" FontFamily="Segoe UI" VerticalAlignment="Center" />
+                            <CheckBox x:Name="StartMinimizedCheck" Grid.Column="1"
+                                      VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </Grid>
+
+                        <!-- Overlay always on top -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Overlays always on top" FontSize="11"
+                                       Foreground="#EDF2F8" FontFamily="Segoe UI" VerticalAlignment="Center" />
+                            <CheckBox x:Name="AlwaysOnTopCheck" Grid.Column="1" IsChecked="True"
+                                      VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Card: About ───────────────────────────────────── -->
+                <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1" Margin="0,0,0,12" Padding="16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="WolfNET Radio" FontSize="13" FontWeight="Bold"
+                                       Foreground="#D4A017" FontFamily="Segoe UI" />
+                            <TextBlock Text="Luna Wolves Legion · gwrecon.com" FontSize="10"
+                                       Foreground="#8A96A8" FontFamily="Segoe UI" Margin="0,2,0,0" />
+                            <TextBlock Text="Star Citizen® is a trademark of Cloud Imperium Rights LLC"
+                                       FontSize="9" Foreground="#4A5568" FontFamily="Segoe UI" Margin="0,4,0,0"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Image Grid.Column="1" Source="/Assets/wolfnet-logo.png"
+                               Width="48" Height="48" Margin="12,0,0,0"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               VerticalAlignment="Center" />
+                    </Grid>
                 </Border>
 
             </StackPanel>
