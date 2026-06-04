@@ -16,9 +16,9 @@ public class OpusProcessor : IDisposable
 
     public OpusProcessor()
     {
-        _encoder = OpusEncoder.Create(SAMPLE_RATE, CHANNELS, OpusApplication.OPUS_APPLICATION_VOIP);
+        _encoder = new OpusEncoder(SAMPLE_RATE, CHANNELS, OpusApplication.OPUS_APPLICATION_VOIP);
         _encoder.Bitrate = 16000;
-        _decoder = OpusDecoder.Create(SAMPLE_RATE, CHANNELS);
+        _decoder = new OpusDecoder(SAMPLE_RATE, CHANNELS);
     }
 
     /// Encode PCM float samples to Opus bytes
