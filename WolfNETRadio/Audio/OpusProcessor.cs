@@ -1,3 +1,5 @@
+using Concentus.Enums;
+using Concentus.Structs;
 using Concentus;
 
 namespace WolfNETRadio.Audio;
@@ -15,7 +17,7 @@ public class OpusProcessor : IDisposable
 
     public OpusProcessor()
     {
-        _encoder = new OpusEncoder(SAMPLE_RATE, CHANNELS, OpusApplication.Voip);
+        _encoder = new OpusEncoder(SAMPLE_RATE, CHANNELS, OpusApplication.OPUS_APPLICATION_VOIP);
         _encoder.Bitrate = 16000;
         _decoder = new OpusDecoder(SAMPLE_RATE, CHANNELS);
     }

@@ -1,3 +1,4 @@
+using Concentus.Structs;
 using Concentus;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -36,7 +37,7 @@ public class SRSVoiceClient : IDisposable
         _udp = new UdpClient();
         _udp.Connect(host, port);
 
-        _encoder = new OpusEncoder(SAMPLE_RATE, CHANNELS, OpusApplication.Voip);
+        _encoder = new OpusEncoder(SAMPLE_RATE, CHANNELS, OpusApplication.OPUS_APPLICATION_VOIP);
         _decoder = new OpusDecoder(SAMPLE_RATE, CHANNELS);
 
         if (string.IsNullOrWhiteSpace(_clientGuid))
