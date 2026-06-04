@@ -81,6 +81,24 @@ public partial class MainViewModel : ObservableObject
     public IEnumerable<string> InputDevices => _audioIn.GetInputDevices();
     public IEnumerable<string> OutputDevices => _audioOut.GetOutputDevices();
 
+    public bool RadioEffectsEnabled
+    {
+        get => _state.RadioEffectsEnabled;
+        set { _state.RadioEffectsEnabled = value; OnPropertyChanged(); }
+    }
+
+    public float SpeakerVolume
+    {
+        get => _state.SpeakerVolume;
+        set { _state.SpeakerVolume = value; OnPropertyChanged(); }
+    }
+
+    public float MicVolume
+    {
+        get => _state.MicVolume;
+        set { _state.MicVolume = value; OnPropertyChanged(); }
+    }
+
     public string? SelectedInputDevice
     {
         get => _state.InputDeviceName;
