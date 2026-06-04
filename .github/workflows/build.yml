@@ -14,6 +14,8 @@ jobs:
   build:
     name: Build Client (Windows x64)
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
