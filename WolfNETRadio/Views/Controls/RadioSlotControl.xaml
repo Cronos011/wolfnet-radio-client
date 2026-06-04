@@ -81,7 +81,7 @@
                                FontSize="9"
                                FontWeight="Bold"
                                VerticalAlignment="Center" />
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="4">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <TextBlock x:Name="PART_TunedCount"
                                    Text="{Binding TunedClientCount, ElementName=Root, StringFormat=👤 {0}}"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -118,7 +118,7 @@
             </UniformGrid>
 
             <!-- Volume + Retransmit -->
-            <Grid Grid.Row="4" ColumnDefinitions="*,26" ColumnSpacing="4">
+            <Grid Grid.Row="4" ColumnDefinitions="*,26" Column>
                 <Slider x:Name="PART_VolumeSlider"
                         Minimum="0" Maximum="100"
                         Value="{Binding Volume, ElementName=Root, Mode=TwoWay}"

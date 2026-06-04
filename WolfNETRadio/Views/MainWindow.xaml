@@ -46,7 +46,7 @@
         <TabControl>
             <TabItem Header="CONNECT">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{StaticResource BgDeepBrush}">
-                    <StackPanel Margin="10" Spacing="10">
+                    <StackPanel Margin="10">
                         <StackPanel>
                             <Label Content="SERVER ADDRESS" />
                             <TextBox Text="gwrecon.com:5002" />
@@ -59,12 +59,12 @@
 
                         <Button Content="CONNECT / DISCONNECT" FontSize="14" Height="36" />
 
-                        <StackPanel Orientation="Horizontal" Spacing="16">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="8" Height="8" Fill="{StaticResource GreenActiveBrush}" VerticalAlignment="Center" />
                                 <TextBlock Text="SERVER" VerticalAlignment="Center" />
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" Spacing="6">
+                            <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="8" Height="8" Fill="{StaticResource RedDangerBrush}" VerticalAlignment="Center" />
                                 <TextBlock Text="VOIP" VerticalAlignment="Center" />
                             </StackPanel>
@@ -96,8 +96,8 @@
             </TabItem>
 
             <TabItem Header="RADIOS">
-                <StackPanel Margin="10" Spacing="12">
-                    <StackPanel Orientation="Horizontal" Spacing="12">
+                <StackPanel Margin="10">
+                    <StackPanel Orientation="Horizontal">
                         <ToggleButton Style="{StaticResource OverlayToggleStyle}" Content="COMMS ARRAY" Width="200" Height="48" />
                         <ToggleButton Style="{StaticResource OverlayToggleStyle}" Content="COMMAND CENTER" Width="200" Height="48" />
                     </StackPanel>
@@ -175,7 +175,7 @@
             </TabItem>
 
             <TabItem Header="SETTINGS">
-                <StackPanel Margin="10" Spacing="10">
+                <StackPanel Margin="10">
                     <CheckBox Content="Radio Effects" />
                     <CheckBox Content="Start Minimized" />
                     <CheckBox Content="Start With Overlays Visible" />
@@ -184,7 +184,7 @@
 
             <TabItem Header="HELP">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{StaticResource BgDeepBrush}">
-                    <StackPanel Margin="10" Spacing="10">
+                    <StackPanel Margin="10">
                         <TextBlock Text="GETTING STARTED" Foreground="{StaticResource GoldBrush}" FontWeight="Bold" />
                         <TextBlock Text="Enter your server address and access key, then connect. Verify the SERVER and VOIP indicators turn green before transmitting." />
 

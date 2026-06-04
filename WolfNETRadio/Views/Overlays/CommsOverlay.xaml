@@ -23,7 +23,12 @@
             </Grid.RowDefinitions>
 
             <Border Grid.Row="0" Style="{StaticResource OverlayTitleBar}" MouseDown="TitleBar_MouseDown">
-                <Grid ColumnDefinitions="*,15,15" ColumnSpacing="4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="15" />
+                        <ColumnDefinition Width="15" />
+                    </Grid.ColumnDefinitions>
                     <TextBlock Style="{StaticResource OverlayTitleText}" Text="▶ COMMS ARRAY" />
                     <Button Grid.Column="1" Style="{StaticResource OverlayWindowButton}" Content="–" Click="Minimize_Click" />
                     <Button Grid.Column="2" Style="{StaticResource OverlayCloseButton}" Content="✕" Click="Close_Click" />
