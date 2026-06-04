@@ -17,7 +17,7 @@
 
     <!-- Base TextBlock style -->
     <Style TargetType="TextBlock" x:Key="BaseText">
-        <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeNormal}" />
     </Style>

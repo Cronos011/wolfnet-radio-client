@@ -7,8 +7,9 @@
         mc:Ignorable="d"
         Title="WolfNET Radio"
         Icon="/Assets/wolfnet-radio.ico"
-        Width="600" Height="680"
+        Width="620" Height="700"
         WindowStyle="SingleBorderWindow"
+        FontFamily="Segoe UI"
         Background="{StaticResource BgDeepBrush}">
 
     <Window.Resources>
@@ -42,166 +43,301 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="10">
-        <TabControl>
-            <TabItem Header="CONNECT">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{StaticResource BgDeepBrush}">
-                    <StackPanel Margin="10">
-                        <StackPanel>
-                            <Label Content="SERVER ADDRESS" />
-                            <TextBox Text="gwrecon.com:5002" />
-                        </StackPanel>
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-                        <StackPanel>
-                            <Label Content="RADIO ACCESS KEY" />
-                            <PasswordBox />
-                        </StackPanel>
+        <Border Grid.Row="0" Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="0,0,0,1">
+            <Grid Margin="16,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-                        <Button Content="CONNECT / DISCONNECT" FontSize="14" Height="36" />
-
-                        <StackPanel Orientation="Horizontal">
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="8" Height="8" Fill="{StaticResource GreenActiveBrush}" VerticalAlignment="Center" />
-                                <TextBlock Text="SERVER" VerticalAlignment="Center" />
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="8" Height="8" Fill="{StaticResource RedDangerBrush}" VerticalAlignment="Center" />
-                                <TextBlock Text="VOIP" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </StackPanel>
-
-                        <Separator />
-
-                        <StackPanel>
-                            <Label Content="INPUT DEVICE" />
-                            <ComboBox />
-                        </StackPanel>
-
-                        <StackPanel>
-                            <Label Content="OUTPUT DEVICE" />
-                            <ComboBox />
-                        </StackPanel>
-
-                        <StackPanel>
-                            <Label Content="MIC LEVEL" />
-                            <controls:VUMeterControl />
-                        </StackPanel>
-
-                        <StackPanel>
-                            <Label Content="SPEAKER VOLUME" />
-                            <Slider Minimum="0" Maximum="100" />
-                        </StackPanel>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Image Source="/Assets/wolfnet-logo.png" Width="36" Height="36" Margin="0,0,10,0"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="WOLFNET RADIO" FontSize="16" FontWeight="Bold"
+                                   Foreground="#D4A017" FontFamily="Segoe UI" />
+                        <TextBlock Text="Voice comms — gwrecon.com:5002" FontSize="10"
+                                   Foreground="#8A96A8" FontFamily="Segoe UI" />
                     </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-
-            <TabItem Header="RADIOS">
-                <StackPanel Margin="10">
-                    <StackPanel Orientation="Horizontal">
-                        <ToggleButton Style="{StaticResource OverlayToggleStyle}" Content="COMMS ARRAY" Width="200" Height="48" />
-                        <ToggleButton Style="{StaticResource OverlayToggleStyle}" Content="COMMAND CENTER" Width="200" Height="48" />
-                    </StackPanel>
-                    <TextBlock Text="CONNECTED CLIENTS: 0" Foreground="{StaticResource TextMutedBrush}" />
                 </StackPanel>
-            </TabItem>
 
-            <TabItem Header="CONTROLS">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{StaticResource BgDeepBrush}">
-                    <Grid Margin="10">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
+                    <Ellipse x:Name="ServerStatusDot" Width="8" Height="8" Fill="#FF4444" Margin="0,0,4,0" />
+                    <TextBlock x:Name="ServerStatusText" Text="DISCONNECTED" FontSize="10"
+                               Foreground="#8A96A8" FontFamily="Consolas" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <Ellipse x:Name="VoipStatusDot" Width="8" Height="8" Fill="#FF4444" Margin="0,0,4,0" />
+                    <TextBlock x:Name="VoipStatusText" Text="VOIP" FontSize="10"
+                               Foreground="#8A96A8" FontFamily="Consolas" VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="16,16,16,16">
+
+                <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1" Margin="0,0,0,12" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="🔑  RADIO ACCESS KEY" FontSize="11" FontWeight="Bold"
+                                   Foreground="#4FC3F7" FontFamily="Segoe UI" Margin="0,0,0,8" />
+                        <TextBlock Text="Authenticates you with gwrecon.com. Get your key from gwrecon.com/comms." FontSize="11"
+                                   Foreground="#8A96A8" FontFamily="Segoe UI" Margin="0,0,0,10" TextWrapping="Wrap" />
+
+                        <TextBox x:Name="RadioAccessKeyBox"
+                                 Background="#0C1119" Foreground="#4FC3F7" BorderBrush="#1E2A3A" BorderThickness="1"
+                                 FontFamily="Consolas" FontSize="12" Height="32" Padding="8,4"
+                                 ToolTip="Paste your Radio Access Key here" />
+
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="140" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="ServerAddressBox" Grid.Column="0"
+                                     Background="#0C1119" Foreground="#EDF2F8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                     FontFamily="Consolas" FontSize="11" Height="32" Padding="8,4"
+                                     Text="gwrecon.com:5002" />
+                            <Button x:Name="ConnectButton" Grid.Column="2"
+                                    Content="CONNECT" Height="32"
+                                    Background="#D4A017" Foreground="#05080C" BorderThickness="0"
+                                    FontFamily="Segoe UI" FontSize="12" FontWeight="Bold"
+                                    Click="ConnectButton_Click" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1" Margin="0,0,0,12" Padding="16">
+                    <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="120" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="CH-1" />
-                        <Button Grid.Row="0" Grid.Column="1" Content="[UNBOUND]" />
-                        <Button Grid.Row="0" Grid.Column="2" Content="CLEAR" />
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="📡  OVERLAYS" FontSize="11" FontWeight="Bold"
+                                       Foreground="#4FC3F7" FontFamily="Segoe UI" Margin="0,0,0,10" />
+                            <ToggleButton x:Name="CommsArrayButton"
+                                          Content="COMMS ARRAY" Height="40"
+                                          Style="{StaticResource OverlayToggleStyle}"
+                                          Checked="CommsArrayButton_Checked" Unchecked="CommsArrayButton_Unchecked"
+                                          Margin="0,0,0,6" />
+                            <ToggleButton x:Name="CommandCenterButton"
+                                          Content="COMMAND CENTER" Height="40"
+                                          Style="{StaticResource OverlayToggleStyle}"
+                                          Checked="CommandCenterButton_Checked" Unchecked="CommandCenterButton_Unchecked" />
+                        </StackPanel>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="CH-2" />
-                        <Button Grid.Row="1" Grid.Column="1" Content="[UNBOUND]" />
-                        <Button Grid.Row="1" Grid.Column="2" Content="CLEAR" />
-
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="CH-3" />
-                        <Button Grid.Row="2" Grid.Column="1" Content="[UNBOUND]" />
-                        <Button Grid.Row="2" Grid.Column="2" Content="CLEAR" />
-
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="CH-4" />
-                        <Button Grid.Row="3" Grid.Column="1" Content="[UNBOUND]" />
-                        <Button Grid.Row="3" Grid.Column="2" Content="CLEAR" />
-
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="CH-5" />
-                        <Button Grid.Row="4" Grid.Column="1" Content="[UNBOUND]" />
-                        <Button Grid.Row="4" Grid.Column="2" Content="CLEAR" />
-
-                        <TextBlock Grid.Row="5" Grid.Column="0" Text="CH-6" />
-                        <Button Grid.Row="5" Grid.Column="1" Content="[UNBOUND]" />
-                        <Button Grid.Row="5" Grid.Column="2" Content="CLEAR" />
-
-                        <TextBlock Grid.Row="6" Grid.Column="0" Text="CH-7" />
-                        <Button Grid.Row="6" Grid.Column="1" Content="[UNBOUND]" />
-                        <Button Grid.Row="6" Grid.Column="2" Content="CLEAR" />
-
-                        <TextBlock Grid.Row="7" Grid.Column="0" Text="CH-8" />
-                        <Button Grid.Row="7" Grid.Column="1" Content="[UNBOUND]" />
-                        <Button Grid.Row="7" Grid.Column="2" Content="CLEAR" />
-
-                        <TextBlock Grid.Row="8" Grid.Column="0" Text="CH-9" />
-                        <Button Grid.Row="8" Grid.Column="1" Content="[UNBOUND]" />
-                        <Button Grid.Row="8" Grid.Column="2" Content="CLEAR" />
-
-                        <TextBlock Grid.Row="9" Grid.Column="0" Text="CH-10" />
-                        <Button Grid.Row="9" Grid.Column="1" Content="[UNBOUND]" />
-                        <Button Grid.Row="9" Grid.Column="2" Content="CLEAR" />
-
-                        <TextBlock Grid.Row="10" Grid.Column="0" Text="COMMON" />
-                        <Button Grid.Row="10" Grid.Column="1" Content="[UNBOUND]" />
-                        <Button Grid.Row="10" Grid.Column="2" Content="CLEAR" />
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="⚡  CONNECTION" FontSize="11" FontWeight="Bold"
+                                       Foreground="#4FC3F7" FontFamily="Segoe UI" Margin="0,0,0,10" />
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Server" FontSize="10" Foreground="#8A96A8" FontFamily="Segoe UI" Margin="0,2" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="gwrecon.com" FontSize="10" Foreground="#EDF2F8" FontFamily="Consolas" Margin="0,2" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Port" FontSize="10" Foreground="#8A96A8" FontFamily="Segoe UI" Margin="0,2" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="5002" FontSize="10" Foreground="#EDF2F8" FontFamily="Consolas" Margin="0,2" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Clients" FontSize="10" Foreground="#8A96A8" FontFamily="Segoe UI" Margin="0,2" />
+                                <TextBlock x:Name="ClientCountText" Grid.Row="2" Grid.Column="1" Text="0" FontSize="10" Foreground="#4FC3F7" FontFamily="Consolas" Margin="0,2" />
+                            </Grid>
+                        </StackPanel>
                     </Grid>
-                </ScrollViewer>
-            </TabItem>
+                </Border>
 
-            <TabItem Header="SETTINGS">
-                <StackPanel Margin="10">
-                    <CheckBox Content="Radio Effects" />
-                    <CheckBox Content="Start Minimized" />
-                    <CheckBox Content="Start With Overlays Visible" />
-                </StackPanel>
-            </TabItem>
+                <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1" Margin="0,0,0,12" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="🔊  AUDIO" FontSize="11" FontWeight="Bold"
+                                   Foreground="#4FC3F7" FontFamily="Segoe UI" Margin="0,0,0,10" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="8" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="10" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
 
-            <TabItem Header="HELP">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{StaticResource BgDeepBrush}">
-                    <StackPanel Margin="10">
-                        <TextBlock Text="GETTING STARTED" Foreground="{StaticResource GoldBrush}" FontWeight="Bold" />
-                        <TextBlock Text="Enter your server address and access key, then connect. Verify the SERVER and VOIP indicators turn green before transmitting." />
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Input" FontSize="11" Foreground="#8A96A8"
+                                       FontFamily="Segoe UI" VerticalAlignment="Center" />
+                            <ComboBox x:Name="InputDeviceCombo" Grid.Row="0" Grid.Column="1"
+                                      Height="28" Background="#0C1119" Foreground="#EDF2F8"
+                                      BorderBrush="#1E2A3A" FontFamily="Segoe UI" FontSize="11" />
 
-                        <TextBlock Text="CHANNEL CODES" Foreground="{StaticResource GoldBrush}" FontWeight="Bold" Margin="0,6,0,0" />
-                        <TextBlock Text="Channel codes are four-digit frequencies. Use the step buttons or direct entry to tune each radio slot." />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Output" FontSize="11" Foreground="#8A96A8"
+                                       FontFamily="Segoe UI" VerticalAlignment="Center" />
+                            <ComboBox x:Name="OutputDeviceCombo" Grid.Row="2" Grid.Column="1"
+                                      Height="28" Background="#0C1119" Foreground="#EDF2F8"
+                                      BorderBrush="#1E2A3A" FontFamily="Segoe UI" FontSize="11" />
 
-                        <TextBlock Text="PUSH TO TALK" Foreground="{StaticResource GoldBrush}" FontWeight="Bold" Margin="0,6,0,0" />
-                        <TextBlock Text="Assign PTT bindings per channel and a common PTT. Press a binding button to capture the next keypress." />
-
-                        <TextBlock Text="RADIO OVERLAY" Foreground="{StaticResource GoldBrush}" FontWeight="Bold" Margin="0,6,0,0" />
-                        <TextBlock Text="Toggle COMMS ARRAY or COMMAND CENTER to show overlay windows. Use the opacity slider to blend with the cockpit HUD." />
-
-                        <TextBlock Text="TROUBLESHOOTING" Foreground="{StaticResource GoldBrush}" FontWeight="Bold" Margin="0,6,0,0" />
-                        <TextBlock Text="If audio is silent, confirm the correct input/output devices and check that VOIP is connected." />
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Level" FontSize="11" Foreground="#8A96A8"
+                                       FontFamily="Segoe UI" VerticalAlignment="Center" />
+                            <controls:VUMeterControl x:Name="VuMeter" Grid.Row="4" Grid.Column="1" Height="16" />
+                        </Grid>
                     </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-        </TabControl>
+                </Border>
+
+                <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1" Margin="0,0,0,12" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="⌨  CONTROLS" FontSize="11" FontWeight="Bold"
+                                   Foreground="#4FC3F7" FontFamily="Segoe UI" Margin="0,0,0,10" />
+                        <TextBlock Text="Click a key button then press a key to bind PTT." FontSize="10"
+                                   Foreground="#8A96A8" FontFamily="Segoe UI" Margin="0,0,0,10" />
+
+                        <ItemsControl x:Name="PttBindingsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="60" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Label}" FontFamily="Consolas" FontSize="10"
+                                                   Foreground="#8A96A8" VerticalAlignment="Center" />
+                                        <Button Grid.Column="1" Content="{Binding KeyDisplay}" Height="24"
+                                                Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                                FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
+                                        <Button Grid.Column="2" Content="CLEAR" Height="24"
+                                                Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                                FontFamily="Consolas" FontSize="10" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <StackPanel x:Name="StaticPttRows">
+                            <Grid Margin="0,2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="60" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="CH-1" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
+                                <Button Grid.Row="0" Grid.Column="1" Content="[UNBOUND]" Height="24"
+                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
+                                <Button Grid.Row="0" Grid.Column="2" Content="CLEAR" Height="24"
+                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="CH-2" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
+                                <Button Grid.Row="1" Grid.Column="1" Content="[UNBOUND]" Height="24"
+                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
+                                <Button Grid.Row="1" Grid.Column="2" Content="CLEAR" Height="24"
+                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="CH-3" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
+                                <Button Grid.Row="2" Grid.Column="1" Content="[UNBOUND]" Height="24"
+                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
+                                <Button Grid.Row="2" Grid.Column="2" Content="CLEAR" Height="24"
+                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" />
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="CH-4" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
+                                <Button Grid.Row="3" Grid.Column="1" Content="[UNBOUND]" Height="24"
+                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
+                                <Button Grid.Row="3" Grid.Column="2" Content="CLEAR" Height="24"
+                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" />
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="CH-5" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
+                                <Button Grid.Row="4" Grid.Column="1" Content="[UNBOUND]" Height="24"
+                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
+                                <Button Grid.Row="4" Grid.Column="2" Content="CLEAR" Height="24"
+                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" />
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="CH-6" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
+                                <Button Grid.Row="5" Grid.Column="1" Content="[UNBOUND]" Height="24"
+                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
+                                <Button Grid.Row="5" Grid.Column="2" Content="CLEAR" Height="24"
+                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" />
+
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="CH-7" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
+                                <Button Grid.Row="6" Grid.Column="1" Content="[UNBOUND]" Height="24"
+                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
+                                <Button Grid.Row="6" Grid.Column="2" Content="CLEAR" Height="24"
+                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" />
+
+                                <TextBlock Grid.Row="7" Grid.Column="0" Text="CH-8" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
+                                <Button Grid.Row="7" Grid.Column="1" Content="[UNBOUND]" Height="24"
+                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
+                                <Button Grid.Row="7" Grid.Column="2" Content="CLEAR" Height="24"
+                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" />
+
+                                <TextBlock Grid.Row="8" Grid.Column="0" Text="CH-9" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
+                                <Button Grid.Row="8" Grid.Column="1" Content="[UNBOUND]" Height="24"
+                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
+                                <Button Grid.Row="8" Grid.Column="2" Content="CLEAR" Height="24"
+                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" />
+
+                                <TextBlock Grid.Row="9" Grid.Column="0" Text="CH-10" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
+                                <Button Grid.Row="9" Grid.Column="1" Content="[UNBOUND]" Height="24"
+                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
+                                <Button Grid.Row="9" Grid.Column="2" Content="CLEAR" Height="24"
+                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" />
+
+                                <TextBlock Grid.Row="10" Grid.Column="0" Text="COMMON" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
+                                <Button Grid.Row="10" Grid.Column="1" Content="[UNBOUND]" Height="24"
+                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
+                                <Button Grid.Row="10" Grid.Column="2" Content="CLEAR" Height="24"
+                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        FontFamily="Consolas" FontSize="10" />
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Window>

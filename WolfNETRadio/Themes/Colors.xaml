@@ -4,14 +4,14 @@
     <!-- ── WolfNET / gwrecon.com Palette ─────────────────────────────── -->
 
     <!-- Backgrounds -->
-    <Color x:Key="BgDeepColor">#FF020508</Color>
-    <Color x:Key="BgPanelColor">#FF030810</Color>
-    <Color x:Key="BgInputColor">#FF0D1520</Color>
-    <Color x:Key="BgHoverColor">#FF1A2535</Color>
+    <Color x:Key="BgDeepColor">#FF05080C</Color>
+    <Color x:Key="BgPanelColor">#FF090E16</Color>
+    <Color x:Key="BgInputColor">#FF0C1119</Color>
+    <Color x:Key="BgHoverColor">#FF1E2A3A</Color>
 
     <!-- Borders -->
-    <Color x:Key="BorderSubtleColor">#FF1A2535</Color>
-    <Color x:Key="BorderMidColor">#FF2A3545</Color>
+    <Color x:Key="BorderSubtleColor">#FF1E2A3A</Color>
+    <Color x:Key="BorderMidColor">#FF2A3A50</Color>
     <Color x:Key="BorderBrightColor">#FFD4A017</Color>
 
     <!-- Text -->
