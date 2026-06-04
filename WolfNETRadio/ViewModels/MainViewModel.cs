@@ -98,25 +98,40 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
-            StatusMessage = "Authenticating...";
-
-            // 1. Validate Radio Access Key with gwrecon.com
-            var authResult = await _auth.ValidateKeyAsync(_state.RadioAccessKey);
-            if (!authResult.Valid)
+            // 1. Validate Radio Access Key (fail-open if gwrecon unreachable)
+            string callsign = _state.Callsign;
+            if (!string.IsNullOrWhiteSpace(_state.RadioAccessKey))
             {
-                StatusMessage = $"Auth failed: {authResult.Error ?? "Invalid key"}";
-                return;
+                StatusMessage = "Authenticating...";
+                var authResult = await _auth.ValidateKeyAsync(_state.RadioAccessKey);
+                if (authResult.Valid)
+                {
+                    callsign = authResult.Callsign;
+                    _state.Callsign = callsign;
+                    _state.Rank = authResult.Rank;
+                    _state.AuthValid = true;
+                }
+                else if (authResult.Error != null && (
+                    authResult.Error.Contains("connect", System.StringComparison.OrdinalIgnoreCase) ||
+                    authResult.Error.Contains("timeout", System.StringComparison.OrdinalIgnoreCase) ||
+                    authResult.Error.Contains("unreachable", System.StringComparison.OrdinalIgnoreCase)))
+                {
+                    StatusMessage = "Auth server unreachable — connecting anyway...";
+                }
+                else
+                {
+                    StatusMessage = $"Auth failed: {authResult.Error ?? "Invalid key"}";
+                    _state.ServerStatus = ConnectionStatus.Error;
+                    return;
+                }
             }
-            _state.Callsign = authResult.Callsign;
-            _state.Rank = authResult.Rank;
-            _state.AuthValid = true;
-
-            StatusMessage = $"Connecting as {authResult.Callsign}...";
 
             // 2. Parse host:port
             var parts = _state.ServerAddress.Split(':');
-            var host = parts[0];
-            var port = parts.Length > 1 && int.TryParse(parts[1], out var p) ? p : 5002;
+            var host = parts[0].Trim();
+            var port = parts.Length > 1 && int.TryParse(parts[1].Trim(), out var p) ? p : 5002;
+
+            StatusMessage = $"Connecting to {host}:{port}...";
 
             // 3. TCP control connect
             await _control.ConnectAsync(host, port);
@@ -132,7 +147,7 @@ public partial class MainViewModel : ObservableObject
             // 6. Install PTT hook
             _ptt.InstallHook();
 
-            StatusMessage = $"Connected — {authResult.Callsign}";
+            StatusMessage = $"Connected as {callsign}";
         }
         catch (Exception ex)
         {
