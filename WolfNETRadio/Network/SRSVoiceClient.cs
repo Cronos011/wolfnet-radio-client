@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using Concentus.Enums;
-using Concentus.Structs;
 using WolfNETRadio.Models;
 
 namespace WolfNETRadio.Network;
@@ -37,7 +36,7 @@ public class SRSVoiceClient : IDisposable
         _udp = new UdpClient();
         _udp.Connect(host, port);
 
-        _encoder = new OpusEncoder(SAMPLE_RATE, CHANNELS, OpusApplication.OPUS_APPLICATION_VOIP);
+        _encoder = new OpusEncoder(SAMPLE_RATE, CHANNELS, OpusApplication.Voip);
         _decoder = new OpusDecoder(SAMPLE_RATE, CHANNELS);
 
         if (string.IsNullOrWhiteSpace(_clientGuid))
