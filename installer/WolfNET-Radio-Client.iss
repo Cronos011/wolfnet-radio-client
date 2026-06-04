@@ -1,5 +1,7 @@
 #define AppName "WolfNET Radio"
-#define AppVersion GetEnv("AppVersion")
+#ifndef AppVersion
+#define AppVersion "0.1.8"
+#endif
 #define AppPublisher "Luna Wolves Legion"
 #define AppURL "https://gwrecon.com/comms"
 #define AppExeName "WolfNETRadio.exe"
