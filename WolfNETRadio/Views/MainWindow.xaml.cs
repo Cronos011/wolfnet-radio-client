@@ -64,6 +64,9 @@ public partial class MainWindow : Window
     private void ConnectButton_Click(object sender, RoutedEventArgs e)
     {
         var vm = (MainViewModel)DataContext;
-        _ = vm.IsConnected ? Task.Run(vm.DisconnectCommand.ExecuteAsync) : vm.ConnectCommand.ExecuteAsync(null);
+        if (vm.IsConnected)
+            vm.DisconnectCommand.Execute(null);
+        else
+            _ = vm.ConnectCommand.ExecuteAsync(null);
     }
 }
