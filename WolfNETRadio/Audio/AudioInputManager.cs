@@ -15,7 +15,7 @@ public class AudioInputManager : IDisposable
     public IEnumerable<string> GetInputDevices()
     {
         var devices = new List<string>();
-        for (var i = 0; i < WaveInEvent.DeviceCount; i++)
+        for (var i = 0; i < WaveIn.DeviceCount; i++)
         {
             devices.Add(WaveIn.GetCapabilities(i).ProductName);
         }
@@ -32,7 +32,7 @@ public class AudioInputManager : IDisposable
         var deviceIndex = -1;
         if (!string.IsNullOrWhiteSpace(deviceName))
         {
-            for (var i = 0; i < WaveInEvent.DeviceCount; i++)
+            for (var i = 0; i < WaveIn.DeviceCount; i++)
             {
                 var name = WaveIn.GetCapabilities(i).ProductName;
                 if (string.Equals(name, deviceName, StringComparison.OrdinalIgnoreCase))

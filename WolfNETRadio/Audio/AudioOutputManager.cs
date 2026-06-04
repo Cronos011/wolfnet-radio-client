@@ -13,7 +13,7 @@ public class AudioOutputManager : IDisposable
     public IEnumerable<string> GetOutputDevices()
     {
         var devices = new List<string>();
-        for (var i = 0; i < WaveOutEvent.DeviceCount; i++)
+        for (var i = 0; i < WaveOut.DeviceCount; i++)
         {
             devices.Add(WaveOut.GetCapabilities(i).ProductName);
         }
@@ -31,7 +31,7 @@ public class AudioOutputManager : IDisposable
         var deviceIndex = -1;
         if (!string.IsNullOrWhiteSpace(deviceName))
         {
-            for (var i = 0; i < WaveOutEvent.DeviceCount; i++)
+            for (var i = 0; i < WaveOut.DeviceCount; i++)
             {
                 var name = WaveOut.GetCapabilities(i).ProductName;
                 if (string.Equals(name, deviceName, StringComparison.OrdinalIgnoreCase))

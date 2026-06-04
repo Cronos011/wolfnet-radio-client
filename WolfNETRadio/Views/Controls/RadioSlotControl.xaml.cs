@@ -90,7 +90,7 @@ public partial class RadioSlotControl : UserControl
     }
 
     public static readonly RoutedEvent ChannelCodeChangedEvent =
-        RoutedEventManager.RegisterRoutedEvent(nameof(ChannelCodeChanged), RoutingStrategy.Bubble, typeof(EventHandler<ChannelCodeChangedEventArgs>), typeof(RadioSlotControl));
+        EventManager.RegisterRoutedEvent(nameof(ChannelCodeChanged), RoutingStrategy.Bubble, typeof(EventHandler<ChannelCodeChangedEventArgs>), typeof(RadioSlotControl));
 
     public event EventHandler<ChannelCodeChangedEventArgs> ChannelCodeChanged
     {
@@ -99,7 +99,7 @@ public partial class RadioSlotControl : UserControl
     }
 
     public static readonly RoutedEvent StepChangedEvent =
-        RoutedEventManager.RegisterRoutedEvent(nameof(StepChanged), RoutingStrategy.Bubble, typeof(EventHandler<StepChangedEventArgs>), typeof(RadioSlotControl));
+        EventManager.RegisterRoutedEvent(nameof(StepChanged), RoutingStrategy.Bubble, typeof(EventHandler<StepChangedEventArgs>), typeof(RadioSlotControl));
 
     public event EventHandler<StepChangedEventArgs> StepChanged
     {
@@ -108,7 +108,7 @@ public partial class RadioSlotControl : UserControl
     }
 
     public static readonly RoutedEvent RetransmitToggledEvent =
-        RoutedEventManager.RegisterRoutedEvent(nameof(RetransmitToggled), RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(RadioSlotControl));
+        EventManager.RegisterRoutedEvent(nameof(RetransmitToggled), RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(RadioSlotControl));
 
     public event RoutedEventHandler RetransmitToggled
     {
@@ -117,7 +117,7 @@ public partial class RadioSlotControl : UserControl
     }
 
     public static readonly RoutedEvent RadioSelectedEvent =
-        RoutedEventManager.RegisterRoutedEvent(nameof(RadioSelected), RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(RadioSlotControl));
+        EventManager.RegisterRoutedEvent(nameof(RadioSelected), RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(RadioSlotControl));
 
     public event RoutedEventHandler RadioSelected
     {
@@ -126,7 +126,7 @@ public partial class RadioSlotControl : UserControl
     }
 
     public static readonly RoutedEvent VolumeChangedEvent =
-        RoutedEventManager.RegisterRoutedEvent(nameof(VolumeChanged), RoutingStrategy.Bubble, typeof(EventHandler<VolumeChangedEventArgs>), typeof(RadioSlotControl));
+        EventManager.RegisterRoutedEvent(nameof(VolumeChanged), RoutingStrategy.Bubble, typeof(EventHandler<VolumeChangedEventArgs>), typeof(RadioSlotControl));
 
     public event EventHandler<VolumeChangedEventArgs> VolumeChanged
     {
