@@ -268,13 +268,14 @@
                 <!-- PTT/VOX toggle -->
                 <Button x:Name="PART_ModeBtn" Grid.Column="0"
                         Height="13" MinWidth="28"
-                        FontFamily="{StaticResource MonoFont}" FontSize="7" FontWeight="Bold"
-                        Background="{StaticResource BgInputBrush}"
-                        BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"
-                        Foreground="{StaticResource TextMutedBrush}"
                         Click="ModeBtn_Click">
                     <Button.Style>
                         <Style TargetType="Button">
+                            <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+                            <Setter Property="FontSize" Value="7" />
+                            <Setter Property="FontWeight" Value="Bold" />
+                            <Setter Property="Background" Value="{StaticResource BgInputBrush}" />
+                            <Setter Property="BorderThickness" Value="1" />
                             <Setter Property="Content" Value="PTT" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsVox, ElementName=Root}" Value="True">
@@ -290,7 +291,7 @@
                 <!-- Pan: L / ⬜ / R buttons -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
                     <Button x:Name="PART_PanL" Width="14" Height="13"
-                            Content="L" Style="{StaticResource PanBtnBase}"
+                            Content="L"
                             Click="PanL_Click">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource PanBtnBase}">
@@ -304,7 +305,7 @@
                         </Button.Style>
                     </Button>
                     <Button x:Name="PART_PanB" Width="14" Height="13"
-                            Content="⬜" Margin="1,0" Style="{StaticResource PanBtnBase}"
+                            Content="⬜" Margin="1,0"
                             Click="PanB_Click">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource PanBtnBase}">
@@ -318,7 +319,7 @@
                         </Button.Style>
                     </Button>
                     <Button x:Name="PART_PanR" Width="14" Height="13"
-                            Content="R" Style="{StaticResource PanBtnBase}"
+                            Content="R"
                             Click="PanR_Click">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource PanBtnBase}">
@@ -336,13 +337,14 @@
                 <!-- STBY toggle -->
                 <Button x:Name="PART_StbyBtn" Grid.Column="2"
                         Height="13" MinWidth="28"
-                        FontFamily="{StaticResource MonoFont}" FontSize="7" FontWeight="Bold"
-                        Background="{StaticResource BgInputBrush}"
-                        BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"
-                        Foreground="{StaticResource TextMutedBrush}"
                         Click="StbyBtn_Click">
                     <Button.Style>
                         <Style TargetType="Button">
+                            <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+                            <Setter Property="FontSize" Value="7" />
+                            <Setter Property="FontWeight" Value="Bold" />
+                            <Setter Property="Background" Value="{StaticResource BgInputBrush}" />
+                            <Setter Property="BorderThickness" Value="1" />
                             <Setter Property="Content" Value="ACT" />
                             <Setter Property="Foreground" Value="{StaticResource GreenActiveBrush}" />
                             <Setter Property="BorderBrush" Value="{StaticResource GreenActiveBrush}" />
