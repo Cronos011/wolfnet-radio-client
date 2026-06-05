@@ -70,7 +70,16 @@ public class GwReconAuthClient
                         channels.Add(new ChannelPreset(code, label, slot));
                     }
                 }
-                missions.Add(new MissionPreset(name, channels));
+                // Intercom (user's own ship, slot 0)
+                ChannelPreset? intercom = null;
+                if (m.TryGetProperty("intercom", out var ic) && ic.ValueKind == JsonValueKind.Object)
+                {
+                    var iCode  = ic.TryGetProperty("code",  out var iC) ? iC.GetInt32() : 0;
+                    var iLabel = ic.TryGetProperty("label", out var iL) ? iL.GetString() ?? "" : "";
+                    intercom = new ChannelPreset(iCode, iLabel, 0);
+                }
+
+                missions.Add(new MissionPreset(name, channels, intercom));
             }
             return missions;
         }
@@ -81,6 +90,6 @@ public class GwReconAuthClient
 
 // ── Server preset fetching ────────────────────────────────────────────────────
 
-public record MissionPreset(string MissionName, List<ChannelPreset> Channels);
+public record MissionPreset(string MissionName, List<ChannelPreset> Channels, ChannelPreset? Intercom);
 public record ChannelPreset(int Code, string Label, int Slot);
 

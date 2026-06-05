@@ -172,10 +172,17 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="📋  SERVER PRESETS" FontSize="11" FontWeight="Bold"
                                        Foreground="#4FC3F7" FontFamily="Segoe UI" VerticalAlignment="Center" />
-                            <Button x:Name="RefreshPresetsButton" Grid.Column="1" Content="REFRESH"
-                                    Height="22" Padding="10,0" FontFamily="Consolas" FontSize="9"
-                                    Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                    Click="RefreshPresets_Click" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button x:Name="LoadAllPresetsButton" Content="LOAD ALL →"
+                                        Height="22" Padding="10,0" FontFamily="Consolas" FontSize="9" Margin="0,0,6,0"
+                                        Background="#0C1119" Foreground="#43E59A" BorderBrush="#1E4A3A" BorderThickness="1"
+                                        IsEnabled="False"
+                                        Click="LoadAllPresets_Click" />
+                                <Button x:Name="RefreshPresetsButton" Content="REFRESH"
+                                        Height="22" Padding="10,0" FontFamily="Consolas" FontSize="9"
+                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                        Click="RefreshPresets_Click" />
+                            </StackPanel>
                         </Grid>
                         <TextBlock Text="Missions you are signed up for with radio channel assignments."
                                    FontSize="10" Foreground="#8A96A8" FontFamily="Segoe UI"

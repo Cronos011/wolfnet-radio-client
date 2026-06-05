@@ -385,6 +385,7 @@ public partial class MainWindow : Window
         foreach (var m in _loadedPresets)
             MissionPresetsCombo.Items.Add(m.MissionName);
         if (MissionPresetsCombo.Items.Count > 0) MissionPresetsCombo.SelectedIndex = 0;
+        LoadAllPresetsButton.IsEnabled = _loadedPresets.Count > 0;
         RefreshPresetsButton.Content = "REFRESH";
         RefreshPresetsButton.IsEnabled = true;
     }
@@ -396,37 +397,96 @@ public partial class MainWindow : Window
         var mission = _loadedPresets[idx];
 
         PresetChannelsList.Items.Clear();
+
+        var dark   = System.Windows.Media.Color.FromRgb(0x0C, 0x11, 0x19);
+        var border = System.Windows.Media.Color.FromRgb(0x1E, 0x2A, 0x3A);
+        var cyan   = System.Windows.Media.Color.FromRgb(0x4F, 0xC3, 0xF7);
+        var green  = System.Windows.Media.Color.FromRgb(0x43, 0xE5, 0x9A);
+        var mono   = new System.Windows.Media.FontFamily("Consolas");
+
+        // Helper to build a clickable channel row
+        System.Windows.UIElement MakeRow(int code, string rowLabel, string slotText,
+                                         System.Windows.Media.Color textColor, System.Action onClick)
+        {
+            var b = new System.Windows.Controls.Border
+            {
+                Background       = new System.Windows.Media.SolidColorBrush(dark),
+                BorderBrush      = new System.Windows.Media.SolidColorBrush(border),
+                BorderThickness  = new System.Windows.Thickness(1),
+                Padding          = new System.Windows.Thickness(8, 4, 8, 4),
+                Margin           = new System.Windows.Thickness(0, 2, 0, 0),
+                Cursor           = System.Windows.Input.Cursors.Hand
+            };
+            var grid = new System.Windows.Controls.Grid();
+            grid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition
+                { Width = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition
+                { Width = System.Windows.GridLength.Auto });
+
+            var txt = new System.Windows.Controls.TextBlock
+            {
+                Text       = $"[{code:D4}] {rowLabel}",
+                Foreground = new System.Windows.Media.SolidColorBrush(textColor),
+                FontFamily = mono, FontSize = 11
+            };
+            var slotTxt = new System.Windows.Controls.TextBlock
+            {
+                Text       = slotText,
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x8A, 0x96, 0xA8)),
+                FontFamily = mono, FontSize = 10,
+                VerticalAlignment = System.Windows.VerticalAlignment.Center
+            };
+            System.Windows.Controls.Grid.SetColumn(slotTxt, 1);
+            grid.Children.Add(txt);
+            grid.Children.Add(slotTxt);
+            b.Child = grid;
+            b.MouseDown += (_, _) => onClick();
+            return b;
+        }
+
+        var vm = (MainViewModel)DataContext;
+
+        // Intercom row (slot 0)
+        if (mission.Intercom is { } ic)
+        {
+            PresetChannelsList.Items.Add(MakeRow(
+                ic.Code, ic.Label, "→ INTERCOM", green,
+                () => vm.IntercomSlot.CommitChannelCode(ic.Code.ToString())));
+        }
+
+        // Op channel rows (slots 1-10)
+        foreach (var ch in mission.Channels.OrderBy(c => c.Slot))
+        {
+            var capturedCh = ch;
+            PresetChannelsList.Items.Add(MakeRow(
+                ch.Code, ch.Label, $"→ CH-{ch.Slot}", cyan,
+                () =>
+                {
+                    if (capturedCh.Slot >= 1 && capturedCh.Slot <= vm.RadioSlots.Length)
+                        vm.RadioSlots[capturedCh.Slot - 1].CommitChannelCode(capturedCh.Code.ToString());
+                }));
+        }
+
+        LoadAllPresetsButton.IsEnabled = true;
+    }
+
+    private void LoadAllPresets_Click(object sender, RoutedEventArgs e)
+    {
+        var idx = MissionPresetsCombo.SelectedIndex;
+        if (idx < 0 || idx >= _loadedPresets.Count) return;
+        var mission = _loadedPresets[idx];
+        var vm = (MainViewModel)DataContext;
+
+        // Load intercom (slot 0)
+        if (mission.Intercom is { } ic)
+            vm.IntercomSlot.CommitChannelCode(ic.Code.ToString());
+
+        // Load all op channels into their respective slots
         foreach (var ch in mission.Channels)
         {
-            var border = new System.Windows.Controls.Border
-            {
-                Background = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x0C, 0x11, 0x19)),
-                BorderBrush = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x1E, 0x2A, 0x3A)),
-                BorderThickness = new System.Windows.Thickness(1),
-                Padding = new System.Windows.Thickness(8, 4, 8, 4),
-                Margin = new System.Windows.Thickness(0, 2, 0, 0),
-                Cursor = System.Windows.Input.Cursors.Hand
-            };
-            var label = new System.Windows.Controls.TextBlock
-            {
-                Text = $"[{ch.Code:D4}] {ch.Label}  →  Slot {ch.Slot}",
-                Foreground = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x4F, 0xC3, 0xF7)),
-                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
-                FontSize = 11
-            };
-            border.Child = label;
-            // Click to apply preset to that slot
-            var capturedCh = ch;
-            border.MouseDown += (_, _) =>
-            {
-                var vm = (MainViewModel)DataContext;
-                if (capturedCh.Slot >= 0 && capturedCh.Slot < vm.RadioSlots.Length)
-                    vm.RadioSlots[capturedCh.Slot - 1].CommitChannelCode(capturedCh.Code.ToString());
-            };
-            PresetChannelsList.Items.Add(border);
+            if (ch.Slot >= 1 && ch.Slot <= vm.RadioSlots.Length)
+                vm.RadioSlots[ch.Slot - 1].CommitChannelCode(ch.Code.ToString());
         }
     }
 
