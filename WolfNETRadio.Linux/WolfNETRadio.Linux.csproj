@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>WolfNETRadio</AssemblyName>
+    <RootNamespace>WolfNETRadio</RootNamespace>
+    <!-- Linux targets -->
+    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Avalonia UI -->
+    <PackageReference Include="Avalonia"                   Version="11.1.3" />
+    <PackageReference Include="Avalonia.Desktop"           Version="11.1.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent"     Version="11.1.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter"       Version="11.1.3" />
+    <!-- MVVM -->
+    <PackageReference Include="CommunityToolkit.Mvvm"               Version="8.3.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting"         Version="8.0.1" />
+    <!-- Audio (cross-platform via PortAudio) -->
+    <PackageReference Include="PortAudioSharp2"            Version="1.0.8" />
+    <!-- Opus codec (pure .NET, no native deps) -->
+    <PackageReference Include="Concentus"                  Version="2.2.2" />
+    <PackageReference Include="Concentus.OggFile"          Version="1.0.3" />
+  </ItemGroup>
+
+  <!-- ── Shared core files from the WPF project ───────────────────── -->
+  <!-- Models -->
+  <ItemGroup>
+    <Compile Include="../WolfNETRadio/Models/RadioSlot.cs" />
+    <Compile Include="../WolfNETRadio/Models/ClientState.cs" />
+    <Compile Include="../WolfNETRadio/Models/AppSettings.cs" />
+    <!-- Network / Protocol -->
+    <Compile Include="../WolfNETRadio/Network/SRSProtocol.cs" />
+    <Compile Include="../WolfNETRadio/Network/SRSControlClient.cs" />
+    <Compile Include="../WolfNETRadio/Network/SRSVoiceClient.cs" />
+    <Compile Include="../WolfNETRadio/Network/GwReconAuthClient.cs" />
+    <!-- Opus processor (pure .NET, compiles anywhere) -->
+    <Compile Include="../WolfNETRadio/Audio/OpusProcessor.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets/**" />
+    <AvaloniaResource Include="Themes/**" />
+  </ItemGroup>
+</Project>

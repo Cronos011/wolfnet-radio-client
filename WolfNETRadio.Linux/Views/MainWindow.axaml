@@ -1,0 +1,123 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="WolfNETRadio.Views.MainWindow"
+        Title="WolfNET Radio"
+        Width="420" MinWidth="380"
+        Height="820" MinHeight="600"
+        Background="#05080C"
+        Icon="/Assets/wolfnet-logo.png">
+
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="12" Margin="12">
+
+      <!-- ── Header ─────────────────────────────────────────────────── -->
+      <StackPanel Spacing="2">
+        <TextBlock Text="📻 WOLFNET RADIO" FontSize="11" FontWeight="Bold"
+                   Foreground="#43E59A" LetterSpacing="2" />
+        <TextBlock x:Name="StatusLabel" Text="Ready" FontSize="10" Foreground="#8A96A8" />
+      </StackPanel>
+
+      <!-- ── Connection ─────────────────────────────────────────────── -->
+      <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1"
+              CornerRadius="10" Padding="14">
+        <StackPanel Spacing="8">
+          <TextBlock Text="CONNECTION" FontSize="10" FontWeight="Bold"
+                     Foreground="#4FC3F7" LetterSpacing="1.5" />
+          <Grid ColumnDefinitions="80,*" RowDefinitions="Auto,8,Auto,8,Auto">
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Server" FontSize="11" Foreground="#8A96A8" VerticalAlignment="Center" />
+            <TextBox   Grid.Row="0" Grid.Column="1" x:Name="ServerAddressBox" FontFamily="Consolas,monospace" FontSize="12" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Radio Key" FontSize="11" Foreground="#8A96A8" VerticalAlignment="Center" />
+            <TextBox   Grid.Row="2" Grid.Column="1" x:Name="RadioKeyBox"
+                       PasswordChar="●" FontFamily="Consolas,monospace" FontSize="11" />
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Clients" FontSize="11" Foreground="#8A96A8" VerticalAlignment="Center" />
+            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="ClientCountLabel"
+                       Text="0" FontFamily="Consolas" FontSize="11" Foreground="#4FC3F7" />
+          </Grid>
+          <Button x:Name="ConnectButton" Content="CONNECT"
+                  HorizontalAlignment="Stretch"
+                  Background="#1A3A20" BorderBrush="#2A5A30" Foreground="#43E59A"
+                  Click="ConnectButton_Click" />
+        </StackPanel>
+      </Border>
+
+      <!-- ── Audio ──────────────────────────────────────────────────── -->
+      <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1"
+              CornerRadius="10" Padding="14">
+        <StackPanel Spacing="8">
+          <TextBlock Text="🔊  AUDIO" FontSize="10" FontWeight="Bold"
+                     Foreground="#4FC3F7" LetterSpacing="1.5" />
+          <Grid ColumnDefinitions="60,*" RowDefinitions="Auto,6,Auto,6,Auto,8,Auto">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Input" FontSize="11" Foreground="#8A96A8" VerticalAlignment="Center" />
+            <ComboBox  Grid.Row="0" Grid.Column="1" x:Name="InputDeviceCombo" FontSize="11" />
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Output" FontSize="11" Foreground="#8A96A8" VerticalAlignment="Center" />
+            <ComboBox  Grid.Row="2" Grid.Column="1" x:Name="OutputDeviceCombo" FontSize="11" />
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Level" FontSize="11" Foreground="#8A96A8" VerticalAlignment="Center" />
+            <ProgressBar Grid.Row="4" Grid.Column="1" x:Name="VuBar"
+                         Minimum="0" Maximum="100" Value="0" Height="10"
+                         Foreground="#43E59A" />
+            <Button Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
+                    x:Name="AudioTestButton" Content="🎙 HOLD TO TEST MIC"
+                    FontSize="10" FontWeight="Bold" HorizontalAlignment="Stretch"
+                    Foreground="#8A96A8" BorderBrush="#1E2A3A"
+                    PointerPressed="AudioTest_Down" PointerReleased="AudioTest_Up" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- ── Server Presets ─────────────────────────────────────────── -->
+      <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1"
+              CornerRadius="10" Padding="14">
+        <StackPanel Spacing="8">
+          <Grid ColumnDefinitions="*,Auto,Auto">
+            <TextBlock Text="📋  PRESETS" FontSize="10" FontWeight="Bold"
+                       Foreground="#4FC3F7" LetterSpacing="1.5" VerticalAlignment="Center" />
+            <Button Grid.Column="1" x:Name="LoadAllButton" Content="LOAD ALL →"
+                    FontSize="9" FontWeight="Bold" Foreground="#43E59A"
+                    BorderBrush="#1E4A3A" IsEnabled="False"
+                    Click="LoadAll_Click" Margin="0,0,6,0" />
+            <Button Grid.Column="2" x:Name="RefreshButton" Content="REFRESH"
+                    FontSize="9" FontWeight="Bold" Foreground="#D4A017"
+                    Click="Refresh_Click" />
+          </Grid>
+          <ComboBox x:Name="MissionCombo" FontSize="11" HorizontalAlignment="Stretch"
+                    SelectionChanged="MissionCombo_Changed" />
+          <ItemsControl x:Name="PresetList" />
+        </StackPanel>
+      </Border>
+
+      <!-- ── Radio Slots ────────────────────────────────────────────── -->
+      <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1"
+              CornerRadius="10" Padding="14">
+        <StackPanel Spacing="6">
+          <TextBlock Text="📡  RADIOS" FontSize="10" FontWeight="Bold"
+                     Foreground="#4FC3F7" LetterSpacing="1.5" />
+          <ItemsControl x:Name="RadioSlotList" />
+          <!-- Intercom -->
+          <Border Background="#0C1119" BorderBrush="#1E2A3A" BorderThickness="1"
+                  CornerRadius="8" Padding="10,8" Margin="0,6,0,0">
+            <Grid ColumnDefinitions="80,*,80">
+              <StackPanel Grid.Column="0">
+                <TextBlock Text="INTERCOM" FontSize="9" FontWeight="Bold"
+                           Foreground="#D4A017" LetterSpacing="1" />
+                <TextBlock x:Name="IntercomRxLabel" Text="" FontSize="9"
+                           Foreground="#43E59A" IsVisible="False" />
+              </StackPanel>
+              <TextBlock Grid.Column="1" x:Name="IntercomCode"
+                         FontFamily="Consolas,monospace" FontSize="22" FontWeight="Black"
+                         Foreground="#4FC3F7" HorizontalAlignment="Center"
+                         VerticalAlignment="Center" />
+              <TextBlock Grid.Column="2" x:Name="IntercomTxLabel" Text="TX"
+                         FontSize="9" FontWeight="Bold" Foreground="#FF4444"
+                         HorizontalAlignment="Right" VerticalAlignment="Center"
+                         IsVisible="False" />
+            </Grid>
+          </Border>
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</Window>

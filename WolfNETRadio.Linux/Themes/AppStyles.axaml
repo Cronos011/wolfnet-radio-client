@@ -1,0 +1,50 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Dark palette matching Windows client -->
+  <Style Selector="Window">
+    <Setter Property="Background" Value="#05080C" />
+    <Setter Property="Foreground" Value="#EDF2F8" />
+    <Setter Property="FontFamily" Value="Inter,Segoe UI,Ubuntu,sans-serif" />
+  </Style>
+
+  <Style Selector="TextBlock">
+    <Setter Property="Foreground" Value="#EDF2F8" />
+  </Style>
+
+  <Style Selector="TextBox">
+    <Setter Property="Background" Value="#0C1119" />
+    <Setter Property="Foreground" Value="#EDF2F8" />
+    <Setter Property="BorderBrush" Value="#1E2A3A" />
+    <Setter Property="CaretBrush" Value="#D4A017" />
+    <Setter Property="SelectionBrush" Value="#2D4A017A" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="8,6" />
+  </Style>
+
+  <Style Selector="Button">
+    <Setter Property="Background" Value="#0C1119" />
+    <Setter Property="Foreground" Value="#D4A017" />
+    <Setter Property="BorderBrush" Value="#1E2A3A" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="7" />
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#1E2A3A" />
+  </Style>
+
+  <Style Selector="ComboBox">
+    <Setter Property="Background" Value="#0C1119" />
+    <Setter Property="Foreground" Value="#EDF2F8" />
+    <Setter Property="BorderBrush" Value="#1E2A3A" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="8,6" />
+  </Style>
+
+  <Style Selector="Slider">
+    <Setter Property="Foreground" Value="#D4A017" />
+  </Style>
+
+</Styles>

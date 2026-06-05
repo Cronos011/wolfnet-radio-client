@@ -1,0 +1,136 @@
+name: WolfNET Radio — Linux Build
+
+on:
+  push:
+    tags:
+      - 'linux-v*'
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT: WolfNETRadio.Linux/WolfNETRadio.Linux.csproj
+
+jobs:
+  build-linux-x64:
+    name: Build Linux x64
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install native deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libportaudio2 libportaudio-dev \
+            libevdev-dev \
+            libx11-dev libxrandr-dev libxi-dev \
+            libxcursor-dev libxinerama-dev \
+            libgl1-mesa-dev libgles2-mesa-dev
+
+      - name: Restore
+        run: dotnet restore ${{ env.PROJECT }} -r linux-x64
+
+      - name: Build
+        run: dotnet build ${{ env.PROJECT }} -c Release -r linux-x64 --no-restore
+
+      - name: Publish (self-contained)
+        run: |
+          dotnet publish ${{ env.PROJECT }} \
+            -c Release -r linux-x64 --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:PublishTrimmed=false \
+            --output publish/linux-x64/
+
+      - name: Package tar.gz
+        run: |
+          chmod +x publish/linux-x64/WolfNETRadio
+          cd publish/linux-x64
+          tar czf ../../WolfNET-Radio-linux-x64.tar.gz .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WolfNET-Radio-linux-x64
+          path: WolfNET-Radio-linux-x64.tar.gz
+
+      - name: Create/update Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: WolfNET-Radio-linux-x64.tar.gz
+          name: WolfNET Radio ${{ github.ref_name }}
+          body: |
+            ## WolfNET Radio — Linux Build
+
+            **Requirements:**
+            - Linux x86_64 (Ubuntu 22.04+, Fedora 36+, Arch, etc.)
+            - `libportaudio2` — audio I/O
+            - User in the `input` group for global PTT: `sudo usermod -aG input $USER && reboot`
+            - Wayland: works via XWayland or libevdev (input group required for global PTT)
+
+            **Install:**
+            ```bash
+            tar xzf WolfNET-Radio-linux-x64.tar.gz
+            chmod +x WolfNETRadio
+            ./WolfNETRadio
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux-arm64:
+    name: Build Linux ARM64
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install cross-compile tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      - name: Restore
+        run: dotnet restore ${{ env.PROJECT }} -r linux-arm64
+
+      - name: Publish ARM64 (self-contained)
+        run: |
+          dotnet publish ${{ env.PROJECT }} \
+            -c Release -r linux-arm64 --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:PublishTrimmed=false \
+            --output publish/linux-arm64/
+
+      - name: Package ARM64 tar.gz
+        run: |
+          chmod +x publish/linux-arm64/WolfNETRadio
+          cd publish/linux-arm64
+          tar czf ../../WolfNET-Radio-linux-arm64.tar.gz .
+
+      - name: Upload ARM64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WolfNET-Radio-linux-arm64
+          path: WolfNET-Radio-linux-arm64.tar.gz
+
+      - name: Attach ARM64 to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: WolfNET-Radio-linux-arm64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

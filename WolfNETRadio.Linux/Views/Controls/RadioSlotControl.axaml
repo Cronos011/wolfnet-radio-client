@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="WolfNETRadio.Views.Controls.RadioSlotControl"
+             x:Name="Root">
+
+  <Border Background="#0C1119" BorderBrush="#1E2A3A" BorderThickness="1"
+          CornerRadius="8" Padding="10,8" Margin="0,3">
+    <Grid RowDefinitions="Auto,4,Auto,4,Auto,4,Auto">
+
+      <!-- Row 0: Header — Label | TX | RX callsign -->
+      <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,8">
+        <TextBlock x:Name="PART_Label" Grid.Column="0"
+                   FontSize="9" FontWeight="Bold" LetterSpacing="1"
+                   Foreground="#D4A017" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" Text="TX"
+                   FontSize="8" FontWeight="Bold" Foreground="#FF4444"
+                   VerticalAlignment="Center" Margin="4,0"
+                   x:Name="PART_TxLabel" IsVisible="False" />
+        <TextBlock Grid.Column="2" x:Name="PART_RxCallsign"
+                   FontSize="8" Foreground="#43E59A"
+                   VerticalAlignment="Center" IsVisible="False" />
+      </Grid>
+
+      <!-- Row 1: Code display -->
+      <TextBlock Grid.Row="2" x:Name="PART_Code"
+                 FontFamily="Consolas,monospace" FontSize="24" FontWeight="Black"
+                 Foreground="#4FC3F7" HorizontalAlignment="Center" />
+
+      <!-- Row 2: A/B channel buttons -->
+      <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="4">
+        <Button x:Name="PART_ChA" Content="A" Width="28" Height="18"
+                FontSize="9" FontWeight="Bold" Padding="0"
+                Foreground="#8A96A8" Click="ChA_Click" />
+        <Button x:Name="PART_ChB" Content="B" Width="28" Height="18"
+                FontSize="9" FontWeight="Bold" Padding="0"
+                Foreground="#8A96A8" Click="ChB_Click" />
+        <TextBlock x:Name="PART_Note" FontSize="9" Foreground="#8A96A8"
+                   VerticalAlignment="Center" Margin="6,0,0,0" />
+      </StackPanel>
+
+      <!-- Row 3: Status row — Mode | Pan | Standby -->
+      <Grid Grid.Row="6" ColumnDefinitions="Auto,*,Auto">
+        <Button Grid.Column="0" x:Name="PART_Mode"
+                FontSize="7" FontWeight="Bold" Width="36" Height="16" Padding="0"
+                Foreground="#8A96A8" Click="Mode_Click" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="2">
+          <Button x:Name="PART_PanL" Content="L" Width="18" Height="16"
+                  FontSize="8" Padding="0" Click="PanL_Click" />
+          <Button x:Name="PART_PanC" Content="⬜" Width="18" Height="16"
+                  FontSize="8" Padding="0" Click="PanC_Click" />
+          <Button x:Name="PART_PanR" Content="R" Width="18" Height="16"
+                  FontSize="8" Padding="0" Click="PanR_Click" />
+        </StackPanel>
+        <Button Grid.Column="2" x:Name="PART_Stby"
+                FontSize="7" FontWeight="Bold" Width="36" Height="16" Padding="0"
+                Click="Stby_Click" />
+      </Grid>
+
+    </Grid>
+  </Border>
+</UserControl>
