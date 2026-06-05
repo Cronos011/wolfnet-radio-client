@@ -9,14 +9,13 @@ public record AuthResult(bool Valid, string Callsign, int Rank, string? Error);
 
 public class GwReconAuthClient
 {
-    private readonly HttpClient _http = new();
+    private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(10) };
     private const string VALIDATE_URL = "https://gwrecon.com/comms/api/radio/validate-key";
 
     public async Task<AuthResult> ValidateKeyAsync(string radioAccessKey)
     {
         try
         {
-            _http.Timeout = TimeSpan.FromSeconds(10);
             using var request = new HttpRequestMessage(HttpMethod.Get, VALIDATE_URL);
             request.Headers.Add("X-Radio-Key", radioAccessKey);
 
