@@ -51,15 +51,107 @@
         <Setter Property="CaretBrush" Value="{StaticResource CyanBrush}" />
     </Style>
 
-    <!-- Default ComboBox -->
+    <!-- Default ComboBox — full dark ControlTemplate so the header renders dark, not system-white -->
     <Style TargetType="ComboBox">
-        <Setter Property="Background" Value="{StaticResource BgInputBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-        <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
-        <Setter Property="FontSize" Value="11" />
-        <Setter Property="Padding" Value="4,2" />
+        <Setter Property="Background"       Value="{StaticResource BgInputBrush}" />
+        <Setter Property="BorderBrush"      Value="{StaticResource BorderSubtleBrush}" />
+        <Setter Property="BorderThickness"  Value="1" />
+        <Setter Property="Foreground"       Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="FontFamily"       Value="{StaticResource MonoFont}" />
+        <Setter Property="FontSize"         Value="11" />
+        <Setter Property="Padding"          Value="6,4" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <!-- Header row: dark background + arrow button -->
+                        <Grid Background="{TemplateBinding Background}"
+                              x:Name="HeaderGrid">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="22" />
+                            </Grid.ColumnDefinitions>
+                            <!-- Selected item display -->
+                            <ContentPresenter Grid.Column="0"
+                                x:Name="ContentSite"
+                                Content="{TemplateBinding SelectionBoxItem}"
+                                ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                Margin="{TemplateBinding Padding}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Left"
+                                IsHitTestVisible="False"
+                                TextElement.Foreground="{TemplateBinding Foreground}" />
+                            <!-- Arrow button -->
+                            <ToggleButton Grid.Column="1"
+                                x:Name="ToggleBtn"
+                                IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                Focusable="False"
+                                ClickMode="Press"
+                                Background="Transparent"
+                                BorderThickness="0">
+                                <Path Data="M 0 0 L 4 4 L 8 0 Z"
+                                      Fill="{StaticResource TextMutedBrush}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                            </ToggleButton>
+                            <!-- Invisible full-width toggle for click-on-text-area -->
+                            <ToggleButton Grid.Column="0"
+                                IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                Focusable="False"
+                                ClickMode="Press"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Opacity="0" />
+                        </Grid>
+                        <!-- Border overlay for focus ring -->
+                        <Border x:Name="FocusBorder"
+                                BorderBrush="{StaticResource BorderSubtleBrush}"
+                                BorderThickness="1"
+                                IsHitTestVisible="False" />
+                        <!-- Dropdown popup -->
+                        <Popup x:Name="PART_Popup"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Slide"
+                               Placement="Bottom"
+                               PlacementTarget="{Binding ElementName=HeaderGrid}">
+                            <Border x:Name="DropBorder"
+                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                    Background="{StaticResource BgInputBrush}"
+                                    BorderBrush="{StaticResource BorderMidBrush}"
+                                    BorderThickness="1">
+                                <ScrollViewer SnapsToDevicePixels="True" HorizontalScrollBarVisibility="Disabled">
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="FocusBorder" Property="BorderBrush"
+                                    Value="{StaticResource BorderMidBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsDropDownOpen" Value="True">
+                            <Setter TargetName="FocusBorder" Property="BorderBrush"
+                                    Value="{StaticResource GoldBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ContentSite" Property="TextElement.Foreground"
+                                    Value="{StaticResource TextDimBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{StaticResource TextDimBrush}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- Default Slider -->
