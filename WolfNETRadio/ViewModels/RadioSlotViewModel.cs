@@ -54,12 +54,6 @@ public partial class RadioSlotViewModel : ObservableObject
 
     public bool IsChannelA => _slot.IsChannelA;
 
-    public RadioSlot.RadioMode Mode
-    {
-        get => _slot.Mode;
-        set { _slot.Mode = value; OnPropertyChanged(); }
-    }
-
     public RadioSlot.RadioPan Pan
     {
         get => _slot.Pan;
