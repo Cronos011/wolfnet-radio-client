@@ -27,8 +27,8 @@ public class InputTrigger
     // Mouse — VK virtual key code (e.g. VK_LBUTTON=1, RBUTTON=2, MBUTTON=4, XBUTTON1=5, XBUTTON2=6)
     public int MouseVk { get; set; }
 
-    // Joystick
-    public Guid JoystickGuid { get; set; }
+    // Joystick — WinMM device id (0-15) + button index (0-31)
+    public int JoystickId   { get; set; }
     public string JoystickName { get; set; } = string.Empty;
     public int JoystickButton { get; set; }
 
@@ -37,7 +37,7 @@ public class InputTrigger
     {
         InputDeviceType.Keyboard => KeyboardKey?.ToString() ?? "[UNBOUND]",
         InputDeviceType.Mouse    => MouseVkToName(MouseVk),
-        InputDeviceType.Joystick => $"{TruncName(JoystickName)} B{JoystickButton + 1}",
+        InputDeviceType.Joystick => $"{TruncName(JoystickName.Length > 0 ? JoystickName : $"Joy{JoystickId}")} B{JoystickButton + 1}",
         _                        => "[UNBOUND]"
     };
 

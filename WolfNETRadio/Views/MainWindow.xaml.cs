@@ -143,7 +143,6 @@ public partial class MainWindow : Window
     private void BuildKeyBindingRows()
     {
         KeyBindingRows.Children.Clear();
-        // Enumerate connected joysticks once for the label lookup
         _joystickDevices = _pttManager.GetJoystickDevices();
         foreach (var binding in _keyStore.Bindings)
         {
@@ -152,8 +151,8 @@ public partial class MainWindow : Window
         }
     }
 
-    // Cached joystick list for display in binding rows
-    private List<(System.Guid Guid, string Name)> _joystickDevices = [];
+    // Cached joystick list (WinMM int id)
+    private List<(int JoyId, string Name)> _joystickDevices = [];
 
     private UIElement BuildBindingRow(PttBinding binding)
     {
@@ -346,8 +345,8 @@ public partial class MainWindow : Window
         System.Threading.CancellationToken ct)
     {
         // Snapshot button states so we only fire on NEW presses
-        var startMouseState = GetCurrentMouseButtons();
-        var startJoyState   = SnapshotJoyState();
+        var startMouseState = GetCurrentMouseButtons();   // Dictionary<int,bool>
+        var startJoyState   = SnapshotJoyState();          // Dictionary<(int,int),bool>
 
         while (!ct.IsCancellationRequested)
         {
@@ -363,17 +362,18 @@ public partial class MainWindow : Window
             // Check joystick
             foreach (var entry in _joystickDevices)
             {
-                if (!TryPollJoystick(entry.Guid, out var btns)) continue;
-                for (int b = 0; b < btns.Length; b++)
+                if (!TryPollJoystick(entry.JoyId, out uint btns)) continue;
+                for (int b = 0; b < 32; b++)
                 {
-                    var key = (entry.Guid, b);
-                    if (btns[b] && !startJoyState.GetValueOrDefault(key))
+                    var key = (entry.JoyId, b);
+                    var pressed = (btns & (1u << b)) != 0;
+                    if (pressed && !startJoyState.GetValueOrDefault(key))
                         return new WolfNETRadio.Input.InputTrigger
                         {
-                            DeviceType      = WolfNETRadio.Input.InputDeviceType.Joystick,
-                            JoystickGuid    = entry.Guid,
-                            JoystickName    = entry.Name,
-                            JoystickButton  = b
+                            DeviceType    = WolfNETRadio.Input.InputDeviceType.Joystick,
+                            JoystickId    = entry.JoyId,
+                            JoystickName  = entry.Name,
+                            JoystickButton = b
                         };
                 }
             }
@@ -391,42 +391,43 @@ public partial class MainWindow : Window
         return d;
     }
 
-    private Dictionary<(System.Guid, int), bool> SnapshotJoyState()
+    private Dictionary<(int, int), bool> SnapshotJoyState()
     {
-        var snap = new Dictionary<(System.Guid, int), bool>();
+        var snap = new Dictionary<(int, int), bool>();
         foreach (var entry in _joystickDevices)
         {
-            if (!TryPollJoystick(entry.Guid, out var btns)) continue;
-            for (int b = 0; b < btns.Length; b++)
-                snap[(entry.Guid, b)] = btns[b];
+            if (!TryPollJoystick(entry.JoyId, out uint btns)) continue;
+            for (int b = 0; b < 32; b++)
+                snap[(entry.JoyId, b)] = (btns & (1u << b)) != 0;
         }
         return snap;
     }
 
-    // Cache DirectInput Joystick instances for the capture poller
-    private readonly Dictionary<System.Guid, Vortice.DirectInput.Joystick> _captureDiDevs = [];
-    private Vortice.DirectInput.IDirectInput8? _captureDi;
-
-    private bool TryPollJoystick(System.Guid guid, out bool[] buttons)
+    private bool TryPollJoystick(int joyId, out uint buttons)
     {
-        buttons = [];
+        buttons = 0;
         try
         {
-            _captureDi ??= Vortice.DirectInput.DInput.DirectInput8Create();
-            if (!_captureDiDevs.TryGetValue(guid, out var js))
-            {
-                js = new Vortice.DirectInput.Joystick(_captureDi, guid);
-                js.SetCooperativeLevel(nint.Zero,
-                    Vortice.DirectInput.CooperativeLevel.Background |
-                    Vortice.DirectInput.CooperativeLevel.NonExclusive);
-                js.Acquire();
-                _captureDiDevs[guid] = js;
-            }
-            js.Poll();
-            buttons = js.GetCurrentState().Buttons;
+            var info = new WinMMCapture.JOYINFOEX
+                { dwSize = System.Runtime.InteropServices.Marshal.SizeOf<WinMMCapture.JOYINFOEX>(), dwFlags = 0xFF };
+            if (WinMMCapture.joyGetPosEx(joyId, ref info) != 0) return false;
+            buttons = info.dwButtons;
             return true;
         }
         catch { return false; }
+    }
+
+    private static class WinMMCapture
+    {
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public struct JOYINFOEX
+        {
+            public int dwSize, dwFlags;
+            public uint dwXpos, dwYpos, dwZpos, dwRpos, dwUpos, dwVpos;
+            public uint dwButtons, dwButtonNumber, dwPOV, dwReserved1, dwReserved2;
+        }
+        [System.Runtime.InteropServices.DllImport("winmm.dll")]
+        public static extern int joyGetPosEx(int id, ref JOYINFOEX info);
     }
 
     private void CaptureKeyHandler(object sender, System.Windows.Input.KeyEventArgs e)

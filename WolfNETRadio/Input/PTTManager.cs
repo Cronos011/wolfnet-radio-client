@@ -5,59 +5,56 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using WpfKey = System.Windows.Input.Key;
-using Vortice.DirectInput;
 
 namespace WolfNETRadio.Input;
 
 /// <summary>
-/// Manages PTT (Push-To-Talk) bindings across keyboard, mouse, and joystick/HOTAS devices.
-/// Uses low-level Win32 hooks for keyboard + mouse (works even when app is unfocused).
-/// Joystick/HID devices are polled on a background thread via DirectInput.
+/// Manages PTT bindings across keyboard, mouse, and joystick/HOTAS devices.
+/// 
+/// - Keyboard + mouse: Win32 low-level hooks (WH_KEYBOARD_LL + WH_MOUSE_LL)
+///   works even when the app window is not focused.
+/// - Joystick/HOTAS: WinMM joyGetPosEx polling on a background thread.
+///   Covers all HID joystick-class devices (HOTAS, flight sticks, throttles,
+///   gamepads, etc.) up to 16 devices with 32 buttons each. No external package.
 /// </summary>
 public class PTTManager : IDisposable
 {
-    // radioId → binding pair
     private List<PttBinding> _bindings = [];
-
     private readonly HashSet<int> _activeRadios = [];
-    public event Action<int, bool>? PTTStateChanged; // (radioId, isPressed)
+    public event Action<int, bool>? PTTStateChanged;
 
     // ── Keyboard hook ────────────────────────────────────────────────────────
     private nint _kbHook = nint.Zero;
     private Win32.LowLevelKeyboardProc? _kbProc;
-    // alias to avoid ambiguity with Vortice.DirectInput.Key
-    private static WpfKey KeyFromVk(int vk) => System.Windows.Input.KeyInterop.KeyFromVirtualKey(vk);
 
     // ── Mouse hook ───────────────────────────────────────────────────────────
     private nint _mouseHook = nint.Zero;
     private Win32.LowLevelMouseProc? _mouseProc;
 
-    // ── Joystick polling ─────────────────────────────────────────────────────
-    private IDirectInput8? _di;
-    private readonly List<(Vortice.DirectInput.Joystick Device, Guid Guid, string Name)> _joysticks = [];
+    // ── Joystick polling (WinMM) ─────────────────────────────────────────────
     private Thread? _pollThread;
     private volatile bool _pollRunning;
-    private readonly Dictionary<(Guid, int), bool> _joyBtnState = [];
+    // Track previous button states: [joyId][buttonBit]
+    private readonly Dictionary<int, uint> _joyPrevButtons = [];
 
     // ── Public API ───────────────────────────────────────────────────────────
 
     public void SetBindings(IReadOnlyList<PttBinding> bindings)
-    {
-        _bindings = bindings.ToList();
-    }
+        => _bindings = bindings.ToList();
 
-    /// <summary>Returns a list of all connected joystick/HOTAS device names with their GUIDs.</summary>
-    public List<(Guid Guid, string Name)> GetJoystickDevices()
+    /// <summary>
+    /// Returns a list of connected joystick devices found via WinMM.
+    /// Each entry is (joyId 0-15, name).
+    /// </summary>
+    public List<(int JoyId, string Name)> GetJoystickDevices()
     {
-        var result = new List<(Guid, string)>();
-        try
+        var result = new List<(int, string)>();
+        for (int id = 0; id < WinMM.MAXJOYSTICKS; id++)
         {
-            _di ??= DInput.DirectInput8Create();
-            var infos = _di.GetDevices(DeviceClass.GameControl, DeviceEnumerationFlags.AttachedOnly);
-            foreach (var info in infos)
-                result.Add((info.InstanceGuid, info.InstanceName.TrimEnd('\0')));
+            var caps = new WinMM.JOYCAPS();
+            if (WinMM.joyGetDevCaps(id, ref caps, Marshal.SizeOf<WinMM.JOYCAPS>()) == 0)
+                result.Add((id, caps.szPname));
         }
-        catch { }
         return result;
     }
 
@@ -73,24 +70,23 @@ public class PTTManager : IDisposable
     private void InstallKeyboardHook()
     {
         if (_kbHook != nint.Zero) return;
-        _kbProc = KbHookCallback;
+        _kbProc = KbCallback;
         using var proc = Process.GetCurrentProcess();
         _kbHook = Win32.SetWindowsHookEx(Win32.WH_KEYBOARD_LL, _kbProc,
             Win32.GetModuleHandle(proc.MainModule?.ModuleName), 0);
     }
 
-    private nint KbHookCallback(int nCode, nint wParam, nint lParam)
+    private nint KbCallback(int nCode, nint wParam, nint lParam)
     {
         if (nCode >= 0)
         {
             var msg    = wParam.ToInt32();
             var isDown = msg == Win32.WM_KEYDOWN || msg == Win32.WM_SYSKEYDOWN;
             var isUp   = msg == Win32.WM_KEYUP   || msg == Win32.WM_SYSKEYUP;
-
             if (isDown || isUp)
             {
                 var info = Marshal.PtrToStructure<Win32.KBDLLHOOKSTRUCT>(lParam);
-                var key  = KeyFromVk((int)info.vkCode);
+                var key  = System.Windows.Input.KeyInterop.KeyFromVirtualKey((int)info.vkCode);
                 HandleTrigger(InputDeviceType.Keyboard, keyboardKey: key, isDown: isDown);
             }
         }
@@ -102,20 +98,18 @@ public class PTTManager : IDisposable
     private void InstallMouseHook()
     {
         if (_mouseHook != nint.Zero) return;
-        _mouseProc = MouseHookCallback;
+        _mouseProc = MouseCallback;
         using var proc = Process.GetCurrentProcess();
         _mouseHook = Win32.SetWindowsHookEx(Win32.WH_MOUSE_LL, _mouseProc,
             Win32.GetModuleHandle(proc.MainModule?.ModuleName), 0);
     }
 
-    private nint MouseHookCallback(int nCode, nint wParam, nint lParam)
+    private nint MouseCallback(int nCode, nint wParam, nint lParam)
     {
         if (nCode >= 0)
         {
             var msg = wParam.ToInt32();
-            int? vk  = null;
-            bool? dn = null;
-
+            int? vk = null; bool? dn = null;
             switch (msg)
             {
                 case Win32.WM_LBUTTONDOWN: vk = 1; dn = true;  break;
@@ -126,78 +120,52 @@ public class PTTManager : IDisposable
                 case Win32.WM_MBUTTONUP:   vk = 4; dn = false; break;
                 case Win32.WM_XBUTTONDOWN:
                 case Win32.WM_XBUTTONUP:
-                    var ms = Marshal.PtrToStructure<Win32.MSLLHOOKSTRUCT>(lParam);
-                    var xb = (ms.mouseData >> 16) & 0xFFFF;
+                    var s = Marshal.PtrToStructure<Win32.MSLLHOOKSTRUCT>(lParam);
+                    var xb = (s.mouseData >> 16) & 0xFFFF;
                     vk = xb == 1 ? 5 : 6;
                     dn = msg == Win32.WM_XBUTTONDOWN;
                     break;
             }
-
             if (vk.HasValue && dn.HasValue)
                 HandleTrigger(InputDeviceType.Mouse, mouseVk: vk.Value, isDown: dn.Value);
         }
         return Win32.CallNextHookEx(_mouseHook, nCode, wParam, lParam);
     }
 
-    // ── Joystick polling ─────────────────────────────────────────────────────
+    // ── Joystick polling (WinMM joyGetPosEx) ─────────────────────────────────
 
     private void StartJoystickPoll()
     {
         if (_pollRunning) return;
         _pollRunning = true;
-        _pollThread = new Thread(JoystickPollLoop) { IsBackground = true, Name = "WolfNET-JoyPoll" };
+        _pollThread = new Thread(JoyPollLoop) { IsBackground = true, Name = "WolfNET-JoyPoll" };
         _pollThread.Start();
     }
 
-    private void JoystickPollLoop()
+    private void JoyPollLoop()
     {
-        try
-        {
-            _di ??= DInput.DirectInput8Create();
-            var infos = _di.GetDevices(DeviceClass.GameControl, DeviceEnumerationFlags.AttachedOnly);
-
-            foreach (var info in infos)
-            {
-                try
-                {
-                    var js = new Vortice.DirectInput.Joystick(_di, info.InstanceGuid);
-                    js.SetCooperativeLevel(nint.Zero,
-                        CooperativeLevel.Background | CooperativeLevel.NonExclusive);
-                    js.Acquire();
-                    _joysticks.Add((js, info.InstanceGuid, info.InstanceName.TrimEnd('\0')));
-                }
-                catch { /* skip devices we can't acquire */ }
-            }
-        }
-        catch { }
-
         while (_pollRunning)
         {
-            foreach (var (dev, guid, _) in _joysticks)
+            for (int id = 0; id < WinMM.MAXJOYSTICKS; id++)
             {
-                try
+                var info = new WinMM.JOYINFOEX { dwSize = Marshal.SizeOf<WinMM.JOYINFOEX>(), dwFlags = WinMM.JOY_RETURNALL };
+                if (WinMM.joyGetPosEx(id, ref info) != 0) continue;
+
+                var prev = _joyPrevButtons.GetValueOrDefault(id, 0u);
+                var cur  = info.dwButtons;
+                var changed = prev ^ cur;
+
+                for (int btn = 0; btn < 32; btn++)
                 {
-                    dev.Poll();
-                    var state = dev.GetCurrentState();
-
-                    for (int btn = 0; btn < state.Buttons.Length; btn++)
-                    {
-                        var pressed = state.Buttons[btn];
-                        var key     = (guid, btn);
-                        var wasDown = _joyBtnState.GetValueOrDefault(key, false);
-
-                        if (pressed != wasDown)
-                        {
-                            _joyBtnState[key] = pressed;
-                            HandleTrigger(InputDeviceType.Joystick,
-                                joystickGuid: guid, joystickBtn: btn, isDown: pressed);
-                        }
-                    }
+                    uint mask = 1u << btn;
+                    if ((changed & mask) == 0) continue;
+                    var pressed = (cur & mask) != 0;
+                    HandleTrigger(InputDeviceType.Joystick, joyId: id, joyBtn: btn, isDown: pressed);
                 }
-                catch { }
-            }
 
-            Thread.Sleep(8); // ~120 Hz poll
+                _joyPrevButtons[id] = cur;
+            }
+            Thread.Sleep(8); // ~120 Hz
         }
     }
 
@@ -207,59 +175,40 @@ public class PTTManager : IDisposable
         InputDeviceType deviceType,
         WpfKey keyboardKey = WpfKey.None,
         int mouseVk = 0,
-        Guid joystickGuid = default,
-        int joystickBtn = 0,
+        int joyId = 0,
+        int joyBtn = 0,
         bool isDown = false)
     {
         foreach (var binding in _bindings)
         {
-            // Check modifier first — if set, it must be held for primary to fire
-            if (binding.Modifier != null)
-            {
-                bool modHeld = IsHeld(binding.Modifier);
-                if (!modHeld) continue;
-            }
+            if (binding.Modifier != null && !IsHeld(binding.Modifier)) continue;
 
-            var trigger = binding.Primary;
-            if (trigger == null) continue;
+            var t = binding.Primary;
+            if (t == null) continue;
 
-            bool matches = trigger.DeviceType == deviceType && deviceType switch
+            bool hit = t.DeviceType == deviceType && deviceType switch
             {
-                InputDeviceType.Keyboard => (trigger.KeyboardKey ?? WpfKey.None) == keyboardKey,
-                InputDeviceType.Mouse    => trigger.MouseVk      == mouseVk,
-                InputDeviceType.Joystick => trigger.JoystickGuid == joystickGuid
-                                         && trigger.JoystickButton == joystickBtn,
+                InputDeviceType.Keyboard => (t.KeyboardKey ?? WpfKey.None) == keyboardKey,
+                InputDeviceType.Mouse    => t.MouseVk == mouseVk,
+                InputDeviceType.Joystick => t.JoystickId == joyId && t.JoystickButton == joyBtn,
                 _ => false
             };
+            if (!hit) continue;
 
-            if (!matches) continue;
-
-            if (isDown)
-            {
-                if (_activeRadios.Add(binding.RadioId))
-                    PTTStateChanged?.Invoke(binding.RadioId, true);
-            }
-            else
-            {
-                if (_activeRadios.Remove(binding.RadioId))
-                    PTTStateChanged?.Invoke(binding.RadioId, false);
-            }
+            if (isDown) { if (_activeRadios.Add(binding.RadioId))    PTTStateChanged?.Invoke(binding.RadioId, true); }
+            else        { if (_activeRadios.Remove(binding.RadioId))  PTTStateChanged?.Invoke(binding.RadioId, false); }
         }
     }
 
-    // Checks if a trigger is currently "held" (for modifier support)
-    private bool IsHeld(InputTrigger t)
+    private bool IsHeld(InputTrigger t) => t.DeviceType switch
     {
-        return t.DeviceType switch
-        {
-            InputDeviceType.Keyboard => (Win32.GetAsyncKeyState(
-                System.Windows.Input.KeyInterop.VirtualKeyFromKey(t.KeyboardKey ?? WpfKey.None)) & 0x8000) != 0,
-            InputDeviceType.Mouse    => (Win32.GetAsyncKeyState(t.MouseVk) & 0x8000) != 0,
-            InputDeviceType.Joystick =>
-                _joyBtnState.GetValueOrDefault((t.JoystickGuid, t.JoystickButton), false),
-            _ => false
-        };
-    }
+        InputDeviceType.Keyboard => (Win32.GetAsyncKeyState(
+            System.Windows.Input.KeyInterop.VirtualKeyFromKey(t.KeyboardKey ?? WpfKey.None)) & 0x8000) != 0,
+        InputDeviceType.Mouse    => (Win32.GetAsyncKeyState(t.MouseVk) & 0x8000) != 0,
+        InputDeviceType.Joystick =>
+            _joyPrevButtons.TryGetValue(t.JoystickId, out var b) && (b & (1u << t.JoystickButton)) != 0,
+        _ => false
+    };
 
     // ── Dispose ───────────────────────────────────────────────────────────────
 
@@ -268,13 +217,10 @@ public class PTTManager : IDisposable
         _pollRunning = false;
         if (_kbHook    != nint.Zero) Win32.UnhookWindowsHookEx(_kbHook);
         if (_mouseHook != nint.Zero) Win32.UnhookWindowsHookEx(_mouseHook);
-        foreach (var (dev, _, _) in _joysticks)
-            try { dev.Unacquire(); dev.Dispose(); } catch { }
-        _di?.Dispose();
         _kbHook = _mouseHook = nint.Zero;
     }
 
-    // ── Win32 ─────────────────────────────────────────────────────────────────
+    // ── Win32 + WinMM ─────────────────────────────────────────────────────────
 
     private static class Win32
     {
@@ -285,25 +231,47 @@ public class PTTManager : IDisposable
         public struct KBDLLHOOKSTRUCT { public uint vkCode, scanCode, flags, time; public nint dwExtraInfo; }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct MSLLHOOKSTRUCT
-        {
-            public int ptX, ptY;
-            public uint mouseData, flags, time;
-            public nint dwExtraInfo;
-        }
+        public struct MSLLHOOKSTRUCT { public int ptX, ptY; public uint mouseData, flags, time; public nint dwExtraInfo; }
 
-        [DllImport("user32.dll")] public static extern nint SetWindowsHookEx(int id, LowLevelKeyboardProc fn, nint hMod, uint tid);
-        [DllImport("user32.dll")] public static extern nint SetWindowsHookEx(int id, LowLevelMouseProc fn, nint hMod, uint tid);
+        [DllImport("user32.dll")] public static extern nint SetWindowsHookEx(int id, LowLevelKeyboardProc fn, nint h, uint t);
+        [DllImport("user32.dll")] public static extern nint SetWindowsHookEx(int id, LowLevelMouseProc fn, nint h, uint t);
         [DllImport("user32.dll")] public static extern bool UnhookWindowsHookEx(nint h);
         [DllImport("user32.dll")] public static extern nint CallNextHookEx(nint h, int n, nint w, nint l);
         [DllImport("user32.dll")] public static extern short GetAsyncKeyState(int vk);
         [DllImport("kernel32.dll")] public static extern nint GetModuleHandle(string? n);
 
         public const int WH_KEYBOARD_LL = 13, WH_MOUSE_LL = 14;
-        public const int WM_KEYDOWN = 0x0100, WM_KEYUP = 0x0101, WM_SYSKEYDOWN = 0x0104, WM_SYSKEYUP = 0x0105;
-        public const int WM_LBUTTONDOWN = 0x0201, WM_LBUTTONUP = 0x0202;
-        public const int WM_RBUTTONDOWN = 0x0204, WM_RBUTTONUP = 0x0205;
-        public const int WM_MBUTTONDOWN = 0x0207, WM_MBUTTONUP = 0x0208;
-        public const int WM_XBUTTONDOWN = 0x020B, WM_XBUTTONUP = 0x020C;
+        public const int WM_KEYDOWN = 0x100, WM_KEYUP = 0x101, WM_SYSKEYDOWN = 0x104, WM_SYSKEYUP = 0x105;
+        public const int WM_LBUTTONDOWN = 0x201, WM_LBUTTONUP = 0x202;
+        public const int WM_RBUTTONDOWN = 0x204, WM_RBUTTONUP = 0x205;
+        public const int WM_MBUTTONDOWN = 0x207, WM_MBUTTONUP = 0x208;
+        public const int WM_XBUTTONDOWN = 0x20B, WM_XBUTTONUP = 0x20C;
+    }
+
+    private static class WinMM
+    {
+        public const int MAXJOYSTICKS = 16;
+        public const uint JOY_RETURNALL = 0xFF;
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        public struct JOYCAPS
+        {
+            public ushort wMid, wPid;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string szPname;
+            public uint wXmin, wXmax, wYmin, wYmax, wZmin, wZmax, wNumButtons;
+            public uint wPeriodMin, wPeriodMax;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct JOYINFOEX
+        {
+            public int  dwSize, dwFlags;
+            public uint dwXpos, dwYpos, dwZpos, dwRpos, dwUpos, dwVpos;
+            public uint dwButtons, dwButtonNumber, dwPOV;
+            public uint dwReserved1, dwReserved2;
+        }
+
+        [DllImport("winmm.dll")] public static extern int joyGetDevCaps(int id, ref JOYCAPS caps, int size);
+        [DllImport("winmm.dll")] public static extern int joyGetPosEx(int id, ref JOYINFOEX info);
     }
 }
