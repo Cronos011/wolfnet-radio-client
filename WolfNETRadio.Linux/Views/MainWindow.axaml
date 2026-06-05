@@ -5,7 +5,7 @@
         Width="420" MinWidth="380"
         Height="820" MinHeight="600"
         Background="#05080C"
-        Icon="/Assets/wolfnet-logo.png">
+        Icon="avares://WolfNETRadio/Assets/wolfnet-logo.png">
 
   <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Spacing="12" Margin="12">
