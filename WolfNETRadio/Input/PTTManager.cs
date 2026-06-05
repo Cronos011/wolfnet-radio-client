@@ -148,7 +148,7 @@ public class PTTManager : IDisposable
         {
             for (int id = 0; id < WinMM.MAXJOYSTICKS; id++)
             {
-                var info = new WinMM.JOYINFOEX { dwSize = Marshal.SizeOf<WinMM.JOYINFOEX>(), dwFlags = WinMM.JOY_RETURNALL };
+                var info = new WinMM.JOYINFOEX { dwSize = Marshal.SizeOf<WinMM.JOYINFOEX>(), dwFlags = (int)WinMM.JOY_RETURNALL };
                 if (WinMM.joyGetPosEx(id, ref info) != 0) continue;
 
                 var prev = _joyPrevButtons.GetValueOrDefault(id, 0u);
