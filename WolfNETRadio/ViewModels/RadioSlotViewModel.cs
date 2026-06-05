@@ -66,6 +66,24 @@ public partial class RadioSlotViewModel : ObservableObject
         set { _slot.Pan = value; OnPropertyChanged(); }
     }
 
+    /// <summary>True when this radio is in VOX mode (bindable bool for XAML).</summary>
+    public bool IsVox
+    {
+        get => _slot.Mode == RadioSlot.RadioMode.VOX;
+        set
+        {
+            _slot.Mode = value ? RadioSlot.RadioMode.VOX : RadioSlot.RadioMode.PTT;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(Mode));
+        }
+    }
+
+    public RadioSlot.RadioMode Mode
+    {
+        get => _slot.Mode;
+        set { _slot.Mode = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsVox)); }
+    }
+
     public bool IsSlotActive
     {
         get => _slot.IsActive;

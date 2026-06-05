@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using WolfNETRadio.Models;
 
 namespace WolfNETRadio.Views.Controls;
 
@@ -87,6 +88,103 @@ public partial class RadioSlotControl : UserControl
     {
         get => (bool)GetValue(ShowStepButtonsProperty);
         set => SetValue(ShowStepButtonsProperty, value);
+    }
+
+    // ── New DPs: Channel A/B, Mode, Pan, Standby, RX ──────────────────────
+
+    public static readonly DependencyProperty IsChannelAProperty =
+        DependencyProperty.Register(nameof(IsChannelA), typeof(bool), typeof(RadioSlotControl), new PropertyMetadata(true));
+    public bool IsChannelA
+    {
+        get => (bool)GetValue(IsChannelAProperty);
+        set => SetValue(IsChannelAProperty, value);
+    }
+
+    public static readonly DependencyProperty ChannelACodeProperty =
+        DependencyProperty.Register(nameof(ChannelACode), typeof(int), typeof(RadioSlotControl), new PropertyMetadata(1000));
+    public int ChannelACode
+    {
+        get => (int)GetValue(ChannelACodeProperty);
+        set => SetValue(ChannelACodeProperty, value);
+    }
+
+    public static readonly DependencyProperty ChannelBCodeProperty =
+        DependencyProperty.Register(nameof(ChannelBCode), typeof(int), typeof(RadioSlotControl), new PropertyMetadata(1000));
+    public int ChannelBCode
+    {
+        get => (int)GetValue(ChannelBCodeProperty);
+        set => SetValue(ChannelBCodeProperty, value);
+    }
+
+    public static readonly DependencyProperty IsVoxProperty =
+        DependencyProperty.Register(nameof(IsVox), typeof(bool), typeof(RadioSlotControl), new PropertyMetadata(false));
+    public bool IsVox
+    {
+        get => (bool)GetValue(IsVoxProperty);
+        set => SetValue(IsVoxProperty, value);
+    }
+
+    public static readonly DependencyProperty PanModeProperty =
+        DependencyProperty.Register(nameof(PanMode), typeof(RadioSlot.RadioPan), typeof(RadioSlotControl),
+            new PropertyMetadata(RadioSlot.RadioPan.Both));
+    public RadioSlot.RadioPan PanMode
+    {
+        get => (RadioSlot.RadioPan)GetValue(PanModeProperty);
+        set => SetValue(PanModeProperty, value);
+    }
+
+    public static readonly DependencyProperty IsSlotActiveProperty =
+        DependencyProperty.Register(nameof(IsSlotActive), typeof(bool), typeof(RadioSlotControl), new PropertyMetadata(true));
+    public bool IsSlotActive
+    {
+        get => (bool)GetValue(IsSlotActiveProperty);
+        set => SetValue(IsSlotActiveProperty, value);
+    }
+
+    public static readonly DependencyProperty ReceivingCallsignProperty =
+        DependencyProperty.Register(nameof(ReceivingCallsign), typeof(string), typeof(RadioSlotControl), new PropertyMetadata(string.Empty));
+    public string ReceivingCallsign
+    {
+        get => (string)GetValue(ReceivingCallsignProperty);
+        set => SetValue(ReceivingCallsignProperty, value);
+    }
+
+    // ── New Routed Events ──────────────────────────────────────────────────
+
+    public static readonly RoutedEvent ChannelSwitchedEvent =
+        EventManager.RegisterRoutedEvent(nameof(ChannelSwitched), RoutingStrategy.Bubble,
+            typeof(EventHandler<ChannelSwitchedEventArgs>), typeof(RadioSlotControl));
+    public event EventHandler<ChannelSwitchedEventArgs> ChannelSwitched
+    {
+        add => AddHandler(ChannelSwitchedEvent, value);
+        remove => RemoveHandler(ChannelSwitchedEvent, value);
+    }
+
+    public static readonly RoutedEvent ModeChangedEvent =
+        EventManager.RegisterRoutedEvent(nameof(ModeChanged), RoutingStrategy.Bubble,
+            typeof(RoutedEventHandler), typeof(RadioSlotControl));
+    public event RoutedEventHandler ModeChanged
+    {
+        add => AddHandler(ModeChangedEvent, value);
+        remove => RemoveHandler(ModeChangedEvent, value);
+    }
+
+    public static readonly RoutedEvent PanChangedEvent =
+        EventManager.RegisterRoutedEvent(nameof(PanChanged), RoutingStrategy.Bubble,
+            typeof(EventHandler<PanChangedEventArgs>), typeof(RadioSlotControl));
+    public event EventHandler<PanChangedEventArgs> PanChanged
+    {
+        add => AddHandler(PanChangedEvent, value);
+        remove => RemoveHandler(PanChangedEvent, value);
+    }
+
+    public static readonly RoutedEvent StandbyChangedEvent =
+        EventManager.RegisterRoutedEvent(nameof(StandbyChanged), RoutingStrategy.Bubble,
+            typeof(RoutedEventHandler), typeof(RadioSlotControl));
+    public event RoutedEventHandler StandbyChanged
+    {
+        add => AddHandler(StandbyChangedEvent, value);
+        remove => RemoveHandler(StandbyChangedEvent, value);
     }
 
     public static readonly RoutedEvent ChannelCodeChangedEvent =
@@ -233,6 +331,48 @@ public partial class RadioSlotControl : UserControl
     {
         RaiseEvent(new VolumeChangedEventArgs(VolumeChangedEvent, this, Volume));
     }
+
+    // ── New button handlers ───────────────────────────────────────────────
+
+    private void ChABtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (!IsChannelA)
+            RaiseEvent(new ChannelSwitchedEventArgs(ChannelSwitchedEvent, this, true));
+    }
+
+    private void ChBBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (IsChannelA)
+            RaiseEvent(new ChannelSwitchedEventArgs(ChannelSwitchedEvent, this, false));
+    }
+
+    private void ModeBtn_Click(object sender, RoutedEventArgs e)
+    {
+        IsVox = !IsVox;
+        RaiseEvent(new RoutedEventArgs(ModeChangedEvent, this));
+    }
+
+    private void PanL_Click(object sender, RoutedEventArgs e)
+    {
+        PanMode = RadioSlot.RadioPan.Left;
+        RaiseEvent(new PanChangedEventArgs(PanChangedEvent, this, RadioSlot.RadioPan.Left));
+    }
+    private void PanB_Click(object sender, RoutedEventArgs e)
+    {
+        PanMode = RadioSlot.RadioPan.Both;
+        RaiseEvent(new PanChangedEventArgs(PanChangedEvent, this, RadioSlot.RadioPan.Both));
+    }
+    private void PanR_Click(object sender, RoutedEventArgs e)
+    {
+        PanMode = RadioSlot.RadioPan.Right;
+        RaiseEvent(new PanChangedEventArgs(PanChangedEvent, this, RadioSlot.RadioPan.Right));
+    }
+
+    private void StbyBtn_Click(object sender, RoutedEventArgs e)
+    {
+        IsSlotActive = !IsSlotActive;
+        RaiseEvent(new RoutedEventArgs(StandbyChangedEvent, this));
+    }
 }
 
 public class ChannelCodeChangedEventArgs : RoutedEventArgs
@@ -263,4 +403,22 @@ public class VolumeChangedEventArgs : RoutedEventArgs
     }
 
     public double Volume { get; }
+}
+
+public class ChannelSwitchedEventArgs : RoutedEventArgs
+{
+    public ChannelSwitchedEventArgs(RoutedEvent routedEvent, object source, bool isChannelA) : base(routedEvent, source)
+    {
+        IsChannelA = isChannelA;
+    }
+    public bool IsChannelA { get; }
+}
+
+public class PanChangedEventArgs : RoutedEventArgs
+{
+    public PanChangedEventArgs(RoutedEvent routedEvent, object source, WolfNETRadio.Models.RadioSlot.RadioPan pan) : base(routedEvent, source)
+    {
+        Pan = pan;
+    }
+    public WolfNETRadio.Models.RadioSlot.RadioPan Pan { get; }
 }

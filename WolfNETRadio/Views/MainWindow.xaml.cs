@@ -90,6 +90,13 @@ public partial class MainWindow : Window
         SpeakerVolumeSlider.ValueChanged += (_, e) => vm.SpeakerVolume = (float)(e.NewValue / 100.0);
         MicBoostSlider.ValueChanged      += (_, e) => vm.MicVolume      = (float)(e.NewValue / 100.0);
 
+        // VOX sliders
+        VoxThresholdSlider.Value = settings.VoxThreshold;
+        VoxHangSlider.Value      = settings.VoxHangtimeMs;
+        UpdateVoxLabels();
+        VoxThresholdSlider.ValueChanged += (_, _) => { vm.VoxThreshold = (float)VoxThresholdSlider.Value; UpdateVoxLabels(); };
+        VoxHangSlider.ValueChanged      += (_, _) => { vm.VoxHangtimeMs = (int)VoxHangSlider.Value;      UpdateVoxLabels(); };
+
         AlwaysOnTopCheck.Checked += (_, _) => { if (_commsOverlay != null) _commsOverlay.Topmost = true; if (_commandCenter != null) _commandCenter.Topmost = true; };
         AlwaysOnTopCheck.Unchecked += (_, _) => { if (_commsOverlay != null) _commsOverlay.Topmost = false; if (_commandCenter != null) _commandCenter.Topmost = false; };
 
@@ -150,192 +157,249 @@ public partial class MainWindow : Window
             var row = BuildBindingRow(binding);
             KeyBindingRows.Children.Add(row);
         }
+        // Rebuild channel switch rows too
+        BuildSwitchBindingRows();
     }
 
-    // Cached joystick list (WinMM int id)
-    private List<(int JoyId, string Name)> _joystickDevices = [];
-
-    private UIElement BuildBindingRow(PttBinding binding)
+    private void BuildSwitchBindingRows()
     {
+        if (SwitchBindingRows == null) return;
+        SwitchBindingRows.Children.Clear();
+        foreach (var sb in _keyStore.SwitchBindings)
+        {
+            var row = BuildSwitchRow(sb);
+            SwitchBindingRows.Children.Add(row);
+        }
+    }
+
+    private UIElement BuildSwitchRow(WolfNETRadio.Input.ChannelSwitchBinding sb)
+    {
+        var dark   = new SolidColorBrush(Color.FromRgb(0x0C, 0x11, 0x19));
+        var border = new SolidColorBrush(Color.FromRgb(0x1E, 0x2A, 0x3A));
+        var gold   = new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0x17));
+        var muted  = new SolidColorBrush(Color.FromRgb(0x8A, 0x96, 0xA8));
+        var cyan   = new SolidColorBrush(Color.FromRgb(0x4F, 0xC3, 0xF7));
+        var font   = new FontFamily("Consolas");
+
         var grid = new Grid { Margin = new Thickness(0, 2, 0, 2) };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(130) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
 
+        var label = new TextBlock { Text = sb.RadioLabel, FontSize = 11, Foreground = muted, FontFamily = font, VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(label, 0);
+        grid.Children.Add(label);
+
+        var trigBox = new TextBox
+        {
+            Text = sb.SwitchDisplay,
+            IsReadOnly = true,
+            Background = dark, Foreground = sb.SwitchTrigger != null ? cyan : muted,
+            BorderBrush = border, BorderThickness = new Thickness(1),
+            FontFamily = font, FontSize = 11, Height = 24, TextAlignment = TextAlignment.Center
+        };
+        Grid.SetColumn(trigBox, 1);
+        grid.Children.Add(trigBox);
+
+        var setBtn = new Button
+        {
+            Content = "SET", Height = 24, Margin = new Thickness(4, 0, 0, 0),
+            Background = dark, Foreground = gold, BorderBrush = border, BorderThickness = new Thickness(1),
+            FontFamily = font, FontSize = 9
+        };
+        Grid.SetColumn(setBtn, 2);
+        var capturedId = sb.RadioId;
+        setBtn.Click += (_, _) => StartSwitchCapture(capturedId, setBtn, trigBox);
+        grid.Children.Add(setBtn);
+
+        var clrBtn = new Button
+        {
+            Content = "CLR", Height = 24, Margin = new Thickness(2, 0, 0, 0),
+            Background = dark, Foreground = muted, BorderBrush = border, BorderThickness = new Thickness(1),
+            FontFamily = font, FontSize = 9
+        };
+        Grid.SetColumn(clrBtn, 3);
+        clrBtn.Click += (_, _) =>
+        {
+            _keyStore.ClearSwitchTrigger(capturedId);
+            _pttManager.SetSwitchBindings(_keyStore.SwitchBindings);
+            trigBox.Text = "[UNBOUND]";
+            trigBox.Foreground = muted;
+        };
+        grid.Children.Add(clrBtn);
+        return grid;
+    }
+
+    private void StartSwitchCapture(int radioId, Button btn, TextBox display)
+    {
+        _captureCts?.Cancel();
+        _captureCts = new System.Threading.CancellationTokenSource();
+        var cts = _captureCts;
+        btn.Content = "...";
+        display.Text = "Press key/btn...";
+        display.Foreground = new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0x17));
+        PreviewKeyDown += (s, e) =>
+        {
+            cts.Cancel();
+            PreviewKeyDown -= null;
+            var key = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
+            var t = new WolfNETRadio.Input.InputTrigger { DeviceType = WolfNETRadio.Input.InputDeviceType.Keyboard, KeyboardKey = key };
+            _keyStore.SetSwitchTrigger(radioId, t);
+            _pttManager.SetSwitchBindings(_keyStore.SwitchBindings);
+            BuildSwitchBindingRows();
+            btn.Content = "SET";
+            e.Handled = true;
+        };
+        // Also allow mouse/joystick capture asynchronously
+        System.Threading.Tasks.Task.Run(async () =>
+        {
+            var t = await WaitForAnyInputAsync(cts.Token);
+            if (t == null) return;
+            Dispatcher.Invoke(() =>
+            {
+                _keyStore.SetSwitchTrigger(radioId, t);
+                _pttManager.SetSwitchBindings(_keyStore.SwitchBindings);
+                BuildSwitchBindingRows();
+                btn.Content = "SET";
+            });
+        });
+        Focus();
+    }
+
+    // Cached joystick list (WinMM int id)
+    private List<(int JoyId, string Name)> _joystickDevices = [];
+
+    // Capture field enum
+    private enum CaptureField { Primary, PrimaryMod, Secondary, SecondaryMod }
+    private CaptureField _captureField = CaptureField.Primary;
+
+    private UIElement BuildBindingRow(PttBinding binding)
+    {
+        // Layout: Label | P-trigger SET CLR | P-mod SET CLR | S-trigger SET CLR | S-mod SET CLR
+        // Displayed as two stacked sub-rows inside a StackPanel for readability
+        var outer = new StackPanel { Margin = new Thickness(0, 2, 0, 4) };
         var dark = new SolidColorBrush(Color.FromRgb(0x0C, 0x11, 0x19));
         var border = new SolidColorBrush(Color.FromRgb(0x1E, 0x2A, 0x3A));
         var gold = new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0x17));
         var muted = new SolidColorBrush(Color.FromRgb(0x8A, 0x96, 0xA8));
         var cyan = new SolidColorBrush(Color.FromRgb(0x4F, 0xC3, 0xF7));
+        var amber = new SolidColorBrush(Color.FromRgb(0xFF, 0xA5, 0x00));
         var font = new FontFamily("Consolas");
+        var capturedId = binding.RadioId;
 
-        var label = new TextBlock
+        // Helper: build a trigger box + SET + CLR group
+        (Grid row, TextBox box) MakeTriggerGroup(
+            string labelTxt, string display, bool bound,
+            Action<Button, TextBox> onSet, Action<TextBox> onClear)
         {
-            Text = binding.RadioLabel,
-            FontSize = 11,
-            Foreground = muted,
-            FontFamily = font,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        Grid.SetColumn(label, 0);
-        grid.Children.Add(label);
+            var g = new Grid { Margin = new Thickness(0, 1, 0, 0) };
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(58) });
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
 
-        var primaryBox = new TextBox
-        {
-            Text = binding.PrimaryKeyDisplay,
-            IsReadOnly = true,
-            Background = dark,
-            Foreground = binding.Primary != null ? cyan : muted,
-            BorderBrush = border,
-            BorderThickness = new Thickness(1),
-            FontFamily = font,
-            FontSize = 11,
-            Height = 24,
-            TextAlignment = TextAlignment.Center
-        };
-        Grid.SetColumn(primaryBox, 1);
-        grid.Children.Add(primaryBox);
+            var lbl = new TextBlock { Text = labelTxt, FontSize = 9, Foreground = muted, FontFamily = font, VerticalAlignment = VerticalAlignment.Center };
+            Grid.SetColumn(lbl, 0); g.Children.Add(lbl);
 
-        var setBtn = new Button
-        {
-            Content = "SET",
-            Height = 24,
-            Margin = new Thickness(4, 0, 0, 0),
-            Background = dark,
-            Foreground = gold,
-            BorderBrush = border,
-            BorderThickness = new Thickness(1),
-            FontFamily = font,
-            FontSize = 9
-        };
-        Grid.SetColumn(setBtn, 2);
-        var capturedRadioId = binding.RadioId;
-        setBtn.Click += (_, _) => StartCapture(capturedRadioId, false, setBtn, primaryBox);
-        grid.Children.Add(setBtn);
+            var tb = new TextBox
+            {
+                Text = display, IsReadOnly = true,
+                Background = dark, Foreground = bound ? cyan : muted,
+                BorderBrush = border, BorderThickness = new Thickness(1),
+                FontFamily = font, FontSize = 10, Height = 22, TextAlignment = TextAlignment.Center
+            };
+            Grid.SetColumn(tb, 1); g.Children.Add(tb);
 
-        var clearBtn = new Button
-        {
-            Content = "CLR",
-            Height = 24,
-            Margin = new Thickness(2, 0, 0, 0),
-            Background = dark,
-            Foreground = muted,
-            BorderBrush = border,
-            BorderThickness = new Thickness(1),
-            FontFamily = font,
-            FontSize = 9
-        };
-        Grid.SetColumn(clearBtn, 3);
-        clearBtn.Click += (_, _) =>
-        {
-            _keyStore.ClearPrimary(capturedRadioId);
-            primaryBox.Text = "[UNBOUND]";
-            primaryBox.Foreground = muted;
-        };
-        grid.Children.Add(clearBtn);
+            var sb2 = new Button { Content = "SET", Height = 22, Margin = new Thickness(2, 0, 0, 0), Background = dark, Foreground = gold, BorderBrush = border, BorderThickness = new Thickness(1), FontFamily = font, FontSize = 8 };
+            Grid.SetColumn(sb2, 2); sb2.Click += (_, _) => onSet(sb2, tb); g.Children.Add(sb2);
 
-        var modBox = new TextBox
-        {
-            Text = binding.ModifierKeyDisplay,
-            IsReadOnly = true,
-            Background = dark,
-            Foreground = binding.Modifier != null ? cyan : muted,
-            BorderBrush = border,
-            BorderThickness = new Thickness(1),
-            FontFamily = font,
-            FontSize = 11,
-            Height = 24,
-            TextAlignment = TextAlignment.Center,
-            Margin = new Thickness(10, 0, 0, 0)
-        };
-        Grid.SetColumn(modBox, 5);
-        grid.Children.Add(modBox);
+            var cb2 = new Button { Content = "CLR", Height = 22, Margin = new Thickness(2, 0, 0, 0), Background = dark, Foreground = muted, BorderBrush = border, BorderThickness = new Thickness(1), FontFamily = font, FontSize = 8 };
+            Grid.SetColumn(cb2, 3); cb2.Click += (_, _) => onClear(tb); g.Children.Add(cb2);
+            return (g, tb);
+        }
 
-        var setModBtn = new Button
-        {
-            Content = "SET",
-            Height = 24,
-            Margin = new Thickness(4, 0, 0, 0),
-            Background = dark,
-            Foreground = gold,
-            BorderBrush = border,
-            BorderThickness = new Thickness(1),
-            FontFamily = font,
-            FontSize = 9
-        };
-        Grid.SetColumn(setModBtn, 6);
-        setModBtn.Click += (_, _) => StartCapture(capturedRadioId, true, setModBtn, modBox);
-        grid.Children.Add(setModBtn);
+        // Radio label header
+        outer.Children.Add(new TextBlock { Text = binding.RadioLabel, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = gold, FontFamily = font, Margin = new Thickness(0, 2, 0, 2) });
 
-        var clearModBtn = new Button
-        {
-            Content = "CLR",
-            Height = 24,
-            Margin = new Thickness(2, 0, 0, 0),
-            Background = dark,
-            Foreground = muted,
-            BorderBrush = border,
-            BorderThickness = new Thickness(1),
-            FontFamily = font,
-            FontSize = 9
-        };
-        Grid.SetColumn(clearModBtn, 7);
-        clearModBtn.Click += (_, _) =>
-        {
-            _keyStore.ClearModifier(capturedRadioId);
-            modBox.Text = "None";
-            modBox.Foreground = muted;
-        };
-        grid.Children.Add(clearModBtn);
+        // Primary trigger
+        var (pg, _) = MakeTriggerGroup("PRIMARY:", binding.PrimaryDisplay, binding.Primary != null,
+            (btn, box) => StartCapture2(capturedId, CaptureField.Primary, btn, box),
+            box => { _keyStore.ClearPrimary(capturedId); box.Text = "[UNBOUND]"; box.Foreground = muted; _pttManager.SetBindings(_keyStore.Bindings); });
+        outer.Children.Add(pg);
 
-        return grid;
+        // Primary modifier
+        var (pm, _) = MakeTriggerGroup("P-MOD:", binding.PrimaryModDisplay, binding.PrimaryModifier != null,
+            (btn, box) => StartCapture2(capturedId, CaptureField.PrimaryMod, btn, box),
+            box => { _keyStore.ClearPrimaryModifier(capturedId); box.Text = "None"; box.Foreground = muted; _pttManager.SetBindings(_keyStore.Bindings); });
+        outer.Children.Add(pm);
+
+        // Secondary trigger
+        var (sg, _) = MakeTriggerGroup("SECONDARY:", binding.SecondaryDisplay, binding.Secondary != null,
+            (btn, box) => StartCapture2(capturedId, CaptureField.Secondary, btn, box),
+            box => { _keyStore.ClearSecondary(capturedId); box.Text = "[UNBOUND]"; box.Foreground = muted; _pttManager.SetBindings(_keyStore.Bindings); });
+        outer.Children.Add(sg);
+
+        // Secondary modifier
+        var (smg, _) = MakeTriggerGroup("S-MOD:", binding.SecondaryModDisplay, binding.SecondaryModifier != null,
+            (btn, box) => StartCapture2(capturedId, CaptureField.SecondaryMod, btn, box),
+            box => { _keyStore.ClearSecondaryModifier(capturedId); box.Text = "None"; box.Foreground = muted; _pttManager.SetBindings(_keyStore.Bindings); });
+        outer.Children.Add(smg);
+
+        return outer;
+
     }
 
     // Capture state
     private System.Threading.CancellationTokenSource? _captureCts;
 
+    // Legacy StartCapture (still used by old keyboard capture handler) — delegates to StartCapture2
     private void StartCapture(int radioId, bool modifier, Button btn, TextBox display)
+        => StartCapture2(radioId, modifier ? CaptureField.PrimaryMod : CaptureField.Primary, btn, display);
+
+    private void StartCapture2(int radioId, CaptureField field, Button btn, TextBox display)
     {
-        // Cancel any in-progress capture
         _captureCts?.Cancel();
         _captureCts = new System.Threading.CancellationTokenSource();
         var cts = _captureCts;
 
         _captureRadioId  = radioId;
-        _captureModifier = modifier;
-        btn.Content     = "...";
-        display.Text    = "Press key/btn/joy...";
+        _captureField    = field;
+        _captureModifier = field == CaptureField.PrimaryMod || field == CaptureField.SecondaryMod;
+        btn.Content      = "...";
+        display.Text     = "Press key/btn/joy...";
         display.Foreground = new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0x17));
 
-        // Keyboard (highest priority — runs on UI thread via WPF)
         PreviewKeyDown += CaptureKeyHandler;
 
-        // Mouse + joystick capture via background polling
         System.Threading.Tasks.Task.Run(async () =>
         {
             try
             {
                 var trigger = await WaitForAnyInputAsync(cts.Token);
                 if (trigger == null) return;
-
                 Dispatcher.Invoke(() =>
                 {
                     PreviewKeyDown -= CaptureKeyHandler;
-                    if (_captureModifier) _keyStore.SetModifier(_captureRadioId, trigger);
-                    else                  _keyStore.SetPrimary(_captureRadioId,  trigger);
+                    ApplyCapture(trigger);
                     BuildKeyBindingRows();
                     _pttManager.SetBindings(_keyStore.Bindings);
                 });
             }
             catch (OperationCanceledException) { }
         });
-
         Focus();
+    }
+
+    private void ApplyCapture(WolfNETRadio.Input.InputTrigger trigger)
+    {
+        switch (_captureField)
+        {
+            case CaptureField.Primary:      _keyStore.SetPrimary(_captureRadioId,          trigger); break;
+            case CaptureField.PrimaryMod:   _keyStore.SetPrimaryModifier(_captureRadioId,  trigger); break;
+            case CaptureField.Secondary:    _keyStore.SetSecondary(_captureRadioId,         trigger); break;
+            case CaptureField.SecondaryMod: _keyStore.SetSecondaryModifier(_captureRadioId, trigger); break;
+        }
     }
 
     /// <summary>
@@ -439,12 +503,43 @@ public partial class MainWindow : Window
         var trigger = new WolfNETRadio.Input.InputTrigger
             { DeviceType = WolfNETRadio.Input.InputDeviceType.Keyboard, KeyboardKey = key };
 
-        if (_captureModifier) _keyStore.SetModifier(_captureRadioId, trigger);
-        else                   _keyStore.SetPrimary(_captureRadioId,  trigger);
-
+        ApplyCapture(trigger);
         _pttManager.SetBindings(_keyStore.Bindings);
         BuildKeyBindingRows();
         e.Handled = true;
+    }
+
+    // ── Audio Test ────────────────────────────────────────────────
+
+    private void AudioTest_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var audioOut = App.Services.GetRequiredService<WolfNETRadio.Audio.AudioOutputManager>();
+        audioOut.StartPassthrough();
+        AudioTestButton.Content = "🎙 TESTING — RELEASE TO STOP";
+        AudioTestButton.Foreground = new SolidColorBrush(Color.FromRgb(0x43, 0xE5, 0x9A));
+        AudioTestButton.BorderBrush = new SolidColorBrush(Color.FromRgb(0x43, 0xE5, 0x9A));
+    }
+
+    private void AudioTest_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var audioOut = App.Services.GetRequiredService<WolfNETRadio.Audio.AudioOutputManager>();
+        audioOut.StopPassthrough();
+        AudioTestButton.Content = "🎙 HOLD TO TEST MIC";
+        AudioTestButton.Foreground = new SolidColorBrush(Color.FromRgb(0x8A, 0x96, 0xA8));
+        AudioTestButton.BorderBrush = new SolidColorBrush(Color.FromRgb(0x1E, 0x2A, 0x3A));
+    }
+
+    // ── VOX Sliders ────────────────────────────────────────────────
+
+    private void VoxThreshold_Changed(object sender, System.Windows.RoutedPropertyChangedEventArgs<double> e) { }
+    private void VoxHang_Changed(object sender, System.Windows.RoutedPropertyChangedEventArgs<double> e) { }
+
+    private void UpdateVoxLabels()
+    {
+        if (VoxThresholdLabel != null)
+            VoxThresholdLabel.Text = VoxThresholdSlider.Value.ToString("F2");
+        if (VoxHangLabel != null)
+            VoxHangLabel.Text = ((int)VoxHangSlider.Value).ToString();
     }
 
     private static class Win32Native
@@ -525,82 +620,147 @@ public partial class MainWindow : Window
         RefreshPresetsButton.IsEnabled = true;
     }
 
+    // Assignment map: channel slot index -> (radioId 1-10, isChannelA)
+    private readonly Dictionary<int, (int RadioId, bool IsChannelA)> _assignmentMap = [];
+
+    private void ResetAssignmentMap(int channelCount)
+    {
+        _assignmentMap.Clear();
+        // Default: slot 1 -> RADIO 1 CH A, slot 2 -> RADIO 1 CH B,
+        //          slot 3 -> RADIO 2 CH A, slot 4 -> RADIO 2 CH B, ...
+        for (int s = 1; s <= channelCount; s++)
+        {
+            int radio = (s + 1) / 2;           // 1,2->1  3,4->2  5,6->3 ...
+            bool isA  = (s % 2) != 0;          // odd=A, even=B
+            _assignmentMap[s] = (Math.Min(radio, 10), isA);
+        }
+    }
+
     private void MissionPresetsCombo_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         var idx = MissionPresetsCombo.SelectedIndex;
         if (idx < 0 || idx >= _loadedPresets.Count) return;
         var mission = _loadedPresets[idx];
 
+        ResetAssignmentMap(mission.Channels.Count);
         PresetChannelsList.Items.Clear();
 
-        var dark   = System.Windows.Media.Color.FromRgb(0x0C, 0x11, 0x19);
-        var border = System.Windows.Media.Color.FromRgb(0x1E, 0x2A, 0x3A);
-        var cyan   = System.Windows.Media.Color.FromRgb(0x4F, 0xC3, 0xF7);
-        var green  = System.Windows.Media.Color.FromRgb(0x43, 0xE5, 0x9A);
+        var darkC  = System.Windows.Media.Color.FromRgb(0x0C, 0x11, 0x19);
+        var borC   = System.Windows.Media.Color.FromRgb(0x1E, 0x2A, 0x3A);
+        var cyanC  = System.Windows.Media.Color.FromRgb(0x4F, 0xC3, 0xF7);
+        var greenC = System.Windows.Media.Color.FromRgb(0x43, 0xE5, 0x9A);
+        var mutedC = System.Windows.Media.Color.FromRgb(0x8A, 0x96, 0xA8);
+        var darkBr = new System.Windows.Media.SolidColorBrush(darkC);
+        var borBr  = new System.Windows.Media.SolidColorBrush(borC);
         var mono   = new System.Windows.Media.FontFamily("Consolas");
-
-        // Helper to build a clickable channel row
-        System.Windows.UIElement MakeRow(int code, string rowLabel, string slotText,
-                                         System.Windows.Media.Color textColor, System.Action onClick)
-        {
-            var b = new System.Windows.Controls.Border
-            {
-                Background       = new System.Windows.Media.SolidColorBrush(dark),
-                BorderBrush      = new System.Windows.Media.SolidColorBrush(border),
-                BorderThickness  = new System.Windows.Thickness(1),
-                Padding          = new System.Windows.Thickness(8, 4, 8, 4),
-                Margin           = new System.Windows.Thickness(0, 2, 0, 0),
-                Cursor           = System.Windows.Input.Cursors.Hand
-            };
-            var grid = new System.Windows.Controls.Grid();
-            grid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition
-                { Width = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition
-                { Width = System.Windows.GridLength.Auto });
-
-            var txt = new System.Windows.Controls.TextBlock
-            {
-                Text       = $"[{code:D4}] {rowLabel}",
-                Foreground = new System.Windows.Media.SolidColorBrush(textColor),
-                FontFamily = mono, FontSize = 11
-            };
-            var slotTxt = new System.Windows.Controls.TextBlock
-            {
-                Text       = slotText,
-                Foreground = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x8A, 0x96, 0xA8)),
-                FontFamily = mono, FontSize = 10,
-                VerticalAlignment = System.Windows.VerticalAlignment.Center
-            };
-            System.Windows.Controls.Grid.SetColumn(slotTxt, 1);
-            grid.Children.Add(txt);
-            grid.Children.Add(slotTxt);
-            b.Child = grid;
-            b.MouseDown += (_, _) => onClick();
-            return b;
-        }
+        var segoe  = new System.Windows.Media.FontFamily("Segoe UI");
 
         var vm = (MainViewModel)DataContext;
 
-        // Intercom row (slot 0)
+        // Intercom row
         if (mission.Intercom is { } ic)
         {
-            PresetChannelsList.Items.Add(MakeRow(
-                ic.Code, ic.Label, "→ INTERCOM", green,
-                () => vm.IntercomSlot.CommitChannelCode(ic.Code.ToString())));
+            var b = new System.Windows.Controls.Border
+            {
+                Background = darkBr, BorderBrush = borBr, BorderThickness = new System.Windows.Thickness(1),
+                Padding = new System.Windows.Thickness(8, 4, 8, 4), Margin = new System.Windows.Thickness(0, 2, 0, 0)
+            };
+            var row = new System.Windows.Controls.Grid();
+            row.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = System.Windows.GridLength.Auto });
+            row.Children.Add(new System.Windows.Controls.TextBlock
+            {
+                Text = $"[{ic.Code:D4}] {ic.Label}",
+                Foreground = new System.Windows.Media.SolidColorBrush(greenC),
+                FontFamily = mono, FontSize = 11
+            });
+            var ict = new System.Windows.Controls.TextBlock
+            {
+                Text = "→ INTERCOM",
+                Foreground = new System.Windows.Media.SolidColorBrush(mutedC),
+                FontFamily = mono, FontSize = 10, VerticalAlignment = System.Windows.VerticalAlignment.Center
+            };
+            System.Windows.Controls.Grid.SetColumn(ict, 1);
+            row.Children.Add(ict);
+            b.Child = row;
+            b.MouseDown += (_, _) => vm.IntercomSlot.CommitChannelCode(ic.Code.ToString());
+            PresetChannelsList.Items.Add(b);
         }
 
-        // Op channel rows (slots 1-10)
+        // Op channel rows with assignment dropdowns
         foreach (var ch in mission.Channels.OrderBy(c => c.Slot))
         {
-            var capturedCh = ch;
-            PresetChannelsList.Items.Add(MakeRow(
-                ch.Code, ch.Label, $"→ CH-{ch.Slot}", cyan,
-                () =>
-                {
-                    if (capturedCh.Slot >= 1 && capturedCh.Slot <= vm.RadioSlots.Length)
-                        vm.RadioSlots[capturedCh.Slot - 1].CommitChannelCode(capturedCh.Code.ToString());
-                }));
+            var capturedSlot = ch.Slot;
+            var b = new System.Windows.Controls.Border
+            {
+                Background = darkBr, BorderBrush = borBr, BorderThickness = new System.Windows.Thickness(1),
+                Padding = new System.Windows.Thickness(6, 3, 6, 3), Margin = new System.Windows.Thickness(0, 2, 0, 0)
+            };
+            var row = new System.Windows.Controls.Grid();
+            row.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = new System.Windows.GridLength(70) });
+            row.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = new System.Windows.GridLength(44) });
+
+            row.Children.Add(new System.Windows.Controls.TextBlock
+            {
+                Text = $"[{ch.Code:D4}] {ch.Label}",
+                Foreground = new System.Windows.Media.SolidColorBrush(cyanC),
+                FontFamily = mono, FontSize = 11, VerticalAlignment = System.Windows.VerticalAlignment.Center
+            });
+
+            // Radio assignment combo
+            var radioCb = new System.Windows.Controls.ComboBox
+            {
+                Height = 22, FontFamily = segoe, FontSize = 10,
+                Background = new System.Windows.Media.SolidColorBrush(darkC),
+                Foreground = new System.Windows.Media.SolidColorBrush(cyanC),
+                BorderBrush = borBr, Margin = new System.Windows.Thickness(4, 0, 0, 0)
+            };
+            for (int r = 1; r <= 10; r++) radioCb.Items.Add($"R{r}");
+            radioCb.SelectedIndex = (_assignmentMap.TryGetValue(capturedSlot, out var asgn) ? asgn.RadioId : 1) - 1;
+            System.Windows.Controls.Grid.SetColumn(radioCb, 1);
+            row.Children.Add(radioCb);
+
+            // A/B combo
+            var abCb = new System.Windows.Controls.ComboBox
+            {
+                Height = 22, FontFamily = segoe, FontSize = 10,
+                Background = new System.Windows.Media.SolidColorBrush(darkC),
+                Foreground = new System.Windows.Media.SolidColorBrush(cyanC),
+                BorderBrush = borBr, Margin = new System.Windows.Thickness(2, 0, 0, 0)
+            };
+            abCb.Items.Add("CH A"); abCb.Items.Add("CH B");
+            abCb.SelectedIndex = (asgn.IsChannelA) ? 0 : 1;
+            System.Windows.Controls.Grid.SetColumn(abCb, 2);
+            row.Children.Add(abCb);
+
+            // Update assignment map when user changes combo
+            radioCb.SelectionChanged += (_, _) =>
+            {
+                var r = radioCb.SelectedIndex + 1;
+                var isA = abCb.SelectedIndex == 0;
+                _assignmentMap[capturedSlot] = (r, isA);
+            };
+            abCb.SelectionChanged += (_, _) =>
+            {
+                var r = radioCb.SelectedIndex + 1;
+                var isA = abCb.SelectedIndex == 0;
+                _assignmentMap[capturedSlot] = (r, isA);
+            };
+
+            b.Child = row;
+            // Click row border to apply this single channel
+            b.MouseDown += (_, bme) =>
+            {
+                if (bme.OriginalSource is System.Windows.Controls.ComboBox ||  
+                    bme.OriginalSource is System.Windows.Controls.ComboBoxItem) return;
+                if (!_assignmentMap.TryGetValue(capturedSlot, out var a)) return;
+                var slotVm = vm.RadioSlots[a.RadioId - 1];
+                if (a.IsChannelA) slotVm.ChannelACode = ch.Code;
+                else slotVm.ChannelBCode = ch.Code;
+                if (slotVm.IsChannelA != a.IsChannelA) slotVm.SwitchChannel();
+            };
+            PresetChannelsList.Items.Add(b);
         }
 
         LoadAllPresetsButton.IsEnabled = true;
@@ -613,15 +773,18 @@ public partial class MainWindow : Window
         var mission = _loadedPresets[idx];
         var vm = (MainViewModel)DataContext;
 
-        // Load intercom (slot 0)
+        // Load intercom
         if (mission.Intercom is { } ic)
             vm.IntercomSlot.CommitChannelCode(ic.Code.ToString());
 
-        // Load all op channels into their respective slots
+        // Load all op channels using assignment map
         foreach (var ch in mission.Channels)
         {
-            if (ch.Slot >= 1 && ch.Slot <= vm.RadioSlots.Length)
-                vm.RadioSlots[ch.Slot - 1].CommitChannelCode(ch.Code.ToString());
+            if (!_assignmentMap.TryGetValue(ch.Slot, out var asgn)) continue;
+            if (asgn.RadioId < 1 || asgn.RadioId > vm.RadioSlots.Length) continue;
+            var slotVm = vm.RadioSlots[asgn.RadioId - 1];
+            if (asgn.IsChannelA) slotVm.ChannelACode = ch.Code;
+            else slotVm.ChannelBCode = ch.Code;
         }
     }
 

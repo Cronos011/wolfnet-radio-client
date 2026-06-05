@@ -252,6 +252,41 @@
                                        FontFamily="Segoe UI" VerticalAlignment="Center" />
                             <controls:VUMeterControl x:Name="VuMeter" Grid.Row="4" Grid.Column="1" Height="16" />
                         </Grid>
+                        <!-- Audio Test Button -->
+                        <Button x:Name="AudioTestButton" Content="🎙 HOLD TO TEST MIC"
+                                Height="24" Margin="0,10,0,0"
+                                FontFamily="Consolas" FontSize="9" FontWeight="Bold"
+                                Background="#0C1119" Foreground="#8A96A8"
+                                BorderBrush="#1E2A3A" BorderThickness="1"
+                                PreviewMouseDown="AudioTest_MouseDown"
+                                PreviewMouseUp="AudioTest_MouseUp" />
+                        <!-- VOX Settings -->
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="30" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="6" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="VOX Thresh" FontSize="10" Foreground="#8A96A8" FontFamily="Segoe UI" VerticalAlignment="Center" />
+                            <Slider x:Name="VoxThresholdSlider" Grid.Row="0" Grid.Column="1"
+                                    Minimum="0" Maximum="0.5" SmallChange="0.01"
+                                    ValueChanged="VoxThreshold_Changed" />
+                            <TextBlock x:Name="VoxThresholdLabel" Grid.Row="0" Grid.Column="2"
+                                       FontSize="9" Foreground="#74b7ff" FontFamily="Consolas"
+                                       VerticalAlignment="Center" HorizontalAlignment="Right" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="VOX Hang ms" FontSize="10" Foreground="#8A96A8" FontFamily="Segoe UI" VerticalAlignment="Center" />
+                            <Slider x:Name="VoxHangSlider" Grid.Row="2" Grid.Column="1"
+                                    Minimum="100" Maximum="2000" SmallChange="50"
+                                    ValueChanged="VoxHang_Changed" />
+                            <TextBlock x:Name="VoxHangLabel" Grid.Row="2" Grid.Column="2"
+                                       FontSize="9" Foreground="#74b7ff" FontFamily="Consolas"
+                                       VerticalAlignment="Center" HorizontalAlignment="Right" />
+                        </Grid>
                     </StackPanel>
                 </Border>
 
@@ -278,7 +313,20 @@
                             <TextBlock Grid.Column="5" Text="MODIFIER" FontSize="9" Foreground="#4A5568" FontFamily="Consolas" />
                         </Grid>
 
+                        <!-- PTT Bindings (Primary + Secondary each with modifier) -->
+                        <TextBlock Text="PTT BINDINGS" FontSize="10" FontWeight="Bold"
+                                   Foreground="#8A96A8" FontFamily="Consolas"
+                                   Margin="0,0,0,4" />
                         <StackPanel x:Name="KeyBindingRows" />
+
+                        <!-- Channel A↔B Switch Bindings -->
+                        <TextBlock Text="CHANNEL A↔B SWITCH" FontSize="10" FontWeight="Bold"
+                                   Foreground="#8A96A8" FontFamily="Consolas"
+                                   Margin="0,10,0,4" />
+                        <TextBlock Text="Press SET then press a key/button to bind the A↔B switch for each radio."
+                                   FontSize="10" Foreground="#8A96A8" FontFamily="Segoe UI"
+                                   Margin="0,0,0,6" TextWrapping="Wrap" />
+                        <StackPanel x:Name="SwitchBindingRows" />
                     </StackPanel>
                 </Border>
 

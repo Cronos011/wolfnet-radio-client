@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignHeight="118"
+             d:DesignHeight="148"
              d:DesignWidth="190">
 
     <UserControl.Resources>
@@ -20,33 +20,41 @@
             <Setter Property="FontSize" Value="7" />
             <Setter Property="Padding" Value="2,1" />
         </Style>
-
         <Style x:Key="StepDownButtonStyle" TargetType="Button" BasedOn="{StaticResource StepUpButtonStyle}">
             <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
         </Style>
-
         <Style x:Key="ChannelDisplayStyle" TargetType="TextBox" BasedOn="{StaticResource ChannelDisplay}">
             <Setter Property="Background" Value="{StaticResource BgDeepBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Foreground" Value="{StaticResource CyanBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource CyanDimBrush}" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding IsTransmitting, ElementName=Root}" Value="False">
-                    <Setter Property="Foreground" Value="{StaticResource CyanDimBrush}" />
+                <DataTrigger Binding="{Binding IsTransmitting, ElementName=Root}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource CyanBrush}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
-
-        <Style x:Key="ActiveIndicatorStyle" TargetType="Ellipse">
-            <Setter Property="Fill" Value="{StaticResource BorderSubtleBrush}" />
-            <Setter Property="Width" Value="8" />
-            <Setter Property="Height" Value="8" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsActive, ElementName=Root}" Value="True">
-                    <Setter Property="Fill" Value="{StaticResource GreenActiveBrush}" />
-                </DataTrigger>
-            </Style.Triggers>
+        <!-- Channel A/B button style -->
+        <Style x:Key="ChBtnBase" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource BgInputBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+            <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+            <Setter Property="FontSize" Value="9" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <!-- Pan button style -->
+        <Style x:Key="PanBtnBase" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource BgInputBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+            <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+            <Setter Property="FontSize" Value="8" />
+            <Setter Property="Padding" Value="0" />
         </Style>
     </UserControl.Resources>
 
@@ -54,45 +62,92 @@
         <Border Background="{StaticResource BgPanelBrush}"
                 BorderBrush="{StaticResource BorderSubtleBrush}"
                 BorderThickness="1" />
-
         <!-- Corner brackets -->
-        <Border Width="8" Height="8" BorderBrush="{StaticResource GoldBrush}" BorderThickness="2,2,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
+        <Border Width="8" Height="8" BorderBrush="{StaticResource GoldBrush}" BorderThickness="2,2,0,0" HorizontalAlignment="Left"  VerticalAlignment="Top" />
         <Border Width="8" Height="8" BorderBrush="{StaticResource GoldBrush}" BorderThickness="0,2,2,0" HorizontalAlignment="Right" VerticalAlignment="Top" />
-        <Border Width="8" Height="8" BorderBrush="{StaticResource GoldBrush}" BorderThickness="2,0,0,2" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+        <Border Width="8" Height="8" BorderBrush="{StaticResource GoldBrush}" BorderThickness="2,0,0,2" HorizontalAlignment="Left"  VerticalAlignment="Bottom" />
         <Border Width="8" Height="8" BorderBrush="{StaticResource GoldBrush}" BorderThickness="0,0,2,2" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
 
         <Grid Margin="4">
             <Grid.RowDefinitions>
-                <RowDefinition Height="16" />
-                <RowDefinition Height="32" />
-                <RowDefinition Height="12" />
-                <RowDefinition Height="12" />
-                <RowDefinition Height="18" />
-                <RowDefinition Height="22" />
+                <RowDefinition Height="16" />  <!-- header -->
+                <RowDefinition Height="30" />  <!-- channel code -->
+                <RowDefinition Height="14" />  <!-- A/B buttons + RX callsign -->
+                <RowDefinition Height="12" />  <!-- step up (optional) -->
+                <RowDefinition Height="12" />  <!-- step down (optional) -->
+                <RowDefinition Height="14" />  <!-- volume + RT -->
+                <RowDefinition Height="16" />  <!-- status: mode, pan, stby -->
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <Border Grid.Row="0" Background="{StaticResource BgDeepBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1" Padding="4,0">
+            <!-- ── Row 0: Header ─────────────────────────────────────── -->
+            <Border Grid.Row="0" Background="{StaticResource BgDeepBrush}"
+                    BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1" Padding="4,0">
                 <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="10" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Radio label -->
                     <TextBlock x:Name="PART_SlotLabel"
+                               Grid.Column="0"
                                Text="{Binding SlotLabelText, ElementName=Root}"
                                Foreground="{StaticResource GoldBrush}"
                                FontFamily="{StaticResource MonoFont}"
-                               FontSize="9"
-                               FontWeight="Bold"
+                               FontSize="9" FontWeight="Bold"
                                VerticalAlignment="Center" />
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <TextBlock x:Name="PART_TunedCount"
-                                   Text="{Binding TunedClientCount, ElementName=Root, StringFormat=👤 {0}}"
-                                   Foreground="{StaticResource TextMutedBrush}"
-                                   FontFamily="{StaticResource MonoFont}"
-                                   FontSize="8" />
-                        <Ellipse x:Name="PART_ActiveIndicator" Style="{StaticResource ActiveIndicatorStyle}" MouseDown="ActiveIndicator_MouseDown" />
-                    </StackPanel>
+
+                    <!-- TX indicator — red, only visible when transmitting -->
+                    <TextBlock Grid.Column="1"
+                               Text="TX"
+                               Foreground="#FF4444"
+                               FontFamily="{StaticResource MonoFont}"
+                               FontSize="8" FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               Margin="2,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsTransmitting, ElementName=Root}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- Tuned count -->
+                    <TextBlock x:Name="PART_TunedCount"
+                               Grid.Column="2"
+                               Text="{Binding TunedClientCount, ElementName=Root, StringFormat=👤{0}}"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               FontFamily="{StaticResource MonoFont}"
+                               FontSize="8"
+                               VerticalAlignment="Center" />
+
+                    <!-- Activity dot -->
+                    <Ellipse Grid.Column="3" Width="7" Height="7" VerticalAlignment="Center">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{StaticResource BorderSubtleBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsReceiving, ElementName=Root}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource GreenActiveBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsTransmitting, ElementName=Root}" Value="True">
+                                        <Setter Property="Fill" Value="#FF4444" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
                 </Grid>
             </Border>
 
-            <!-- Channel Display -->
+            <!-- ── Row 1: Channel code display ──────────────────────── -->
             <TextBox x:Name="PART_ChannelDisplay"
                      Grid.Row="1"
                      Style="{StaticResource ChannelDisplayStyle}"
@@ -101,44 +156,209 @@
                      LostFocus="ChannelDisplay_LostFocus"
                      KeyDown="ChannelDisplay_KeyDown" />
 
-            <!-- Step Up -->
-            <UniformGrid Grid.Row="2" Columns="4" Visibility="{Binding ShowStepButtons, ElementName=Root, Converter={StaticResource BoolToVis}}">
-                <Button x:Name="PART_StepUp1000" Style="{StaticResource StepUpButtonStyle}" Content="+1000" Click="StepUp1000_Click" />
-                <Button x:Name="PART_StepUp100" Style="{StaticResource StepUpButtonStyle}" Content="+100" Click="StepUp100_Click" />
-                <Button x:Name="PART_StepUp10" Style="{StaticResource StepUpButtonStyle}" Content="+10" Click="StepUp10_Click" />
-                <Button x:Name="PART_StepUp1" Style="{StaticResource StepUpButtonStyle}" Content="+1" Click="StepUp1_Click" />
+            <!-- ── Row 2: A/B buttons (left) + RX callsign (right) ─── -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Channel A button -->
+                <Button x:Name="PART_ChABtn" Grid.Column="0"
+                        Width="18" Height="13"
+                        Style="{StaticResource ChBtnBase}"
+                        Content="A" Click="ChABtn_Click">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource ChBtnBase}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsChannelA, ElementName=Root}" Value="True">
+                                    <Setter Property="Background" Value="#2643E59A" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource GreenActiveBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource GreenActiveBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Channel B button -->
+                <Button x:Name="PART_ChBBtn" Grid.Column="1"
+                        Width="18" Height="13"
+                        Style="{StaticResource ChBtnBase}"
+                        Content="B" Margin="1,0,0,0" Click="ChBBtn_Click">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource ChBtnBase}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsChannelA, ElementName=Root}" Value="False">
+                                    <Setter Property="Background" Value="#2674B7FF" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource CyanBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- RX callsign (right side, green) -->
+                <TextBlock Grid.Column="2"
+                           x:Name="PART_RxCallsign"
+                           Text="{Binding ReceivingCallsign, ElementName=Root, StringFormat=▼ {0}}"
+                           Foreground="{StaticResource GreenActiveBrush}"
+                           FontFamily="{StaticResource MonoFont}"
+                           FontSize="8"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           TextTrimming="CharacterEllipsis">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsReceiving, ElementName=Root}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+
+            <!-- ── Row 3: Step Up ────────────────────────────────────── -->
+            <UniformGrid Grid.Row="3" Columns="4"
+                         Visibility="{Binding ShowStepButtons, ElementName=Root, Converter={StaticResource BoolToVis}}">
+                <Button x:Name="PART_StepUp1000"   Style="{StaticResource StepUpButtonStyle}" Content="+1k"   Click="StepUp1000_Click" />
+                <Button x:Name="PART_StepUp100"    Style="{StaticResource StepUpButtonStyle}" Content="+100"  Click="StepUp100_Click" />
+                <Button x:Name="PART_StepUp10"     Style="{StaticResource StepUpButtonStyle}" Content="+10"   Click="StepUp10_Click" />
+                <Button x:Name="PART_StepUp1"      Style="{StaticResource StepUpButtonStyle}" Content="+1"    Click="StepUp1_Click" />
             </UniformGrid>
 
-            <!-- Step Down -->
-            <UniformGrid Grid.Row="3" Columns="4" Visibility="{Binding ShowStepButtons, ElementName=Root, Converter={StaticResource BoolToVis}}">
-                <Button x:Name="PART_StepDown1000" Style="{StaticResource StepDownButtonStyle}" Content="-1000" Click="StepDown1000_Click" />
-                <Button x:Name="PART_StepDown100" Style="{StaticResource StepDownButtonStyle}" Content="-100" Click="StepDown100_Click" />
-                <Button x:Name="PART_StepDown10" Style="{StaticResource StepDownButtonStyle}" Content="-10" Click="StepDown10_Click" />
-                <Button x:Name="PART_StepDown1" Style="{StaticResource StepDownButtonStyle}" Content="-1" Click="StepDown1_Click" />
+            <!-- ── Row 4: Step Down ──────────────────────────────────── -->
+            <UniformGrid Grid.Row="4" Columns="4"
+                         Visibility="{Binding ShowStepButtons, ElementName=Root, Converter={StaticResource BoolToVis}}">
+                <Button x:Name="PART_StepDown1000" Style="{StaticResource StepDownButtonStyle}" Content="-1k"   Click="StepDown1000_Click" />
+                <Button x:Name="PART_StepDown100"  Style="{StaticResource StepDownButtonStyle}" Content="-100"  Click="StepDown100_Click" />
+                <Button x:Name="PART_StepDown10"   Style="{StaticResource StepDownButtonStyle}" Content="-10"   Click="StepDown10_Click" />
+                <Button x:Name="PART_StepDown1"    Style="{StaticResource StepDownButtonStyle}" Content="-1"    Click="StepDown1_Click" />
             </UniformGrid>
 
-            <!-- Volume + Retransmit -->
-            <Grid Grid.Row="4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="26" />
-                    </Grid.ColumnDefinitions>
+            <!-- ── Row 5: Volume + RT ────────────────────────────────── -->
+            <Grid Grid.Row="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="24" />
+                </Grid.ColumnDefinitions>
                 <Slider x:Name="PART_VolumeSlider"
                         Minimum="0" Maximum="100"
                         Value="{Binding Volume, ElementName=Root, Mode=TwoWay}"
                         Thumb.DragCompleted="VolumeSlider_DragCompleted" />
-                <Button x:Name="PART_RetransmitButton" Grid.Column="1" Content="RT" Click="RetransmitButton_Click" />
+                <Button x:Name="PART_RetransmitButton" Grid.Column="1" Content="RT"
+                        FontFamily="{StaticResource MonoFont}" FontSize="7"
+                        Background="{StaticResource BgInputBrush}"
+                        BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"
+                        Foreground="{StaticResource TextMutedBrush}"
+                        Click="RetransmitButton_Click" />
             </Grid>
 
-            <!-- Tabs -->
-            <TabControl Grid.Row="5" Padding="0">
-                <TabItem Header="RADIO">
-                    <Grid Background="{StaticResource BgDeepBrush}" />
-                </TabItem>
-                <TabItem Header="PRESETS">
-                    <ContentPresenter x:Name="PART_PresetsPanel" />
-                </TabItem>
-            </TabControl>
+            <!-- ── Row 6: Status — Mode | Pan | Standby ─────────────── -->
+            <Grid Grid.Row="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- PTT/VOX toggle -->
+                <Button x:Name="PART_ModeBtn" Grid.Column="0"
+                        Height="13" MinWidth="28"
+                        FontFamily="{StaticResource MonoFont}" FontSize="7" FontWeight="Bold"
+                        Background="{StaticResource BgInputBrush}"
+                        BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"
+                        Foreground="{StaticResource TextMutedBrush}"
+                        Click="ModeBtn_Click">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Content" Value="PTT" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsVox, ElementName=Root}" Value="True">
+                                    <Setter Property="Content" Value="VOX" />
+                                    <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource GoldBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Pan: L / ⬜ / R buttons -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button x:Name="PART_PanL" Width="14" Height="13"
+                            Content="L" Style="{StaticResource PanBtnBase}"
+                            Click="PanL_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource PanBtnBase}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding PanMode, ElementName=Root}" Value="Left">
+                                        <Setter Property="Foreground" Value="{StaticResource CyanBrush}" />
+                                        <Setter Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button x:Name="PART_PanB" Width="14" Height="13"
+                            Content="⬜" Margin="1,0" Style="{StaticResource PanBtnBase}"
+                            Click="PanB_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource PanBtnBase}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding PanMode, ElementName=Root}" Value="Both">
+                                        <Setter Property="Foreground" Value="{StaticResource CyanBrush}" />
+                                        <Setter Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button x:Name="PART_PanR" Width="14" Height="13"
+                            Content="R" Style="{StaticResource PanBtnBase}"
+                            Click="PanR_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource PanBtnBase}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding PanMode, ElementName=Root}" Value="Right">
+                                        <Setter Property="Foreground" Value="{StaticResource CyanBrush}" />
+                                        <Setter Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+
+                <!-- STBY toggle -->
+                <Button x:Name="PART_StbyBtn" Grid.Column="2"
+                        Height="13" MinWidth="28"
+                        FontFamily="{StaticResource MonoFont}" FontSize="7" FontWeight="Bold"
+                        Background="{StaticResource BgInputBrush}"
+                        BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"
+                        Foreground="{StaticResource TextMutedBrush}"
+                        Click="StbyBtn_Click">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Content" Value="ACT" />
+                            <Setter Property="Foreground" Value="{StaticResource GreenActiveBrush}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource GreenActiveBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSlotActive, ElementName=Root}" Value="False">
+                                    <Setter Property="Content" Value="STBY" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

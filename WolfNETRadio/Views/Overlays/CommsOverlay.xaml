@@ -36,20 +36,53 @@
             </Border>
 
             <StackPanel Grid.Row="1" Margin="6">
-                <controls:RadioSlotControl RadioId="1" SlotLabelText="CH-1"
+                <controls:RadioSlotControl RadioId="1" SlotLabelText="RADIO 1" Height="148"
                     ChannelCode="{Binding Radio1.ChannelCode, Mode=TwoWay}"
+                    ChannelACode="{Binding Radio1.ChannelACode, Mode=TwoWay}"
+                    ChannelBCode="{Binding Radio1.ChannelBCode, Mode=TwoWay}"
+                    IsChannelA="{Binding Radio1.IsChannelA}"
+                    IsVox="{Binding Radio1.IsVox, Mode=TwoWay}"
+                    PanMode="{Binding Radio1.Pan, Mode=TwoWay}"
+                    IsSlotActive="{Binding Radio1.IsSlotActive, Mode=TwoWay}"
+                    IsTransmitting="{Binding Radio1.IsTransmitting}"
+                    IsReceiving="{Binding Radio1.IsReceiving}"
+                    ReceivingCallsign="{Binding Radio1.ReceivingCallsign}"
                     Style="{StaticResource RadioSlotStyle}" />
-                <controls:RadioSlotControl RadioId="2" SlotLabelText="CH-2"
+                <controls:RadioSlotControl RadioId="2" SlotLabelText="RADIO 2" Height="148"
                     ChannelCode="{Binding Radio2.ChannelCode, Mode=TwoWay}"
+                    ChannelACode="{Binding Radio2.ChannelACode, Mode=TwoWay}"
+                    ChannelBCode="{Binding Radio2.ChannelBCode, Mode=TwoWay}"
+                    IsChannelA="{Binding Radio2.IsChannelA}"
+                    IsVox="{Binding Radio2.IsVox, Mode=TwoWay}"
+                    PanMode="{Binding Radio2.Pan, Mode=TwoWay}"
+                    IsSlotActive="{Binding Radio2.IsSlotActive, Mode=TwoWay}"
+                    IsTransmitting="{Binding Radio2.IsTransmitting}"
+                    IsReceiving="{Binding Radio2.IsReceiving}"
+                    ReceivingCallsign="{Binding Radio2.ReceivingCallsign}"
                     Style="{StaticResource RadioSlotStyle}" />
-                <controls:RadioSlotControl RadioId="3" SlotLabelText="CH-3"
+                <controls:RadioSlotControl RadioId="3" SlotLabelText="RADIO 3" Height="148"
                     ChannelCode="{Binding Radio3.ChannelCode, Mode=TwoWay}"
+                    ChannelACode="{Binding Radio3.ChannelACode, Mode=TwoWay}"
+                    ChannelBCode="{Binding Radio3.ChannelBCode, Mode=TwoWay}"
+                    IsChannelA="{Binding Radio3.IsChannelA}"
+                    IsVox="{Binding Radio3.IsVox, Mode=TwoWay}"
+                    PanMode="{Binding Radio3.Pan, Mode=TwoWay}"
+                    IsSlotActive="{Binding Radio3.IsSlotActive, Mode=TwoWay}"
+                    IsTransmitting="{Binding Radio3.IsTransmitting}"
+                    IsReceiving="{Binding Radio3.IsReceiving}"
+                    ReceivingCallsign="{Binding Radio3.ReceivingCallsign}"
                     Style="{StaticResource RadioSlotStyle}" />
 
                 <Separator />
 
-                <controls:RadioSlotControl RadioId="0" SlotLabelText="INTERCOM" Height="60" ShowStepButtons="False"
+                <controls:RadioSlotControl RadioId="0" SlotLabelText="INTERCOM" Height="88" ShowStepButtons="False"
                     ChannelCode="{Binding Intercom.ChannelCode, Mode=TwoWay}"
+                    ChannelACode="{Binding Intercom.ChannelACode, Mode=TwoWay}"
+                    ChannelBCode="{Binding Intercom.ChannelBCode, Mode=TwoWay}"
+                    IsChannelA="{Binding Intercom.IsChannelA}"
+                    IsTransmitting="{Binding Intercom.IsTransmitting}"
+                    IsReceiving="{Binding Intercom.IsReceiving}"
+                    ReceivingCallsign="{Binding Intercom.ReceivingCallsign}"
                     Style="{StaticResource RadioSlotStyle}" />
 
                 <Separator />
