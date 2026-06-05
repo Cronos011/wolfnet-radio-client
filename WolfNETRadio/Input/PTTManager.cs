@@ -34,7 +34,7 @@ public class PTTManager : IDisposable
 
     // ── Joystick polling ─────────────────────────────────────────────────────
     private IDirectInput8? _di;
-    private readonly List<(IDirectInputDevice8 Device, Guid Guid, string Name)> _joysticks = [];
+    private readonly List<(Vortice.DirectInput.Joystick Device, Guid Guid, string Name)> _joysticks = [];
     private Thread? _pollThread;
     private volatile bool _pollRunning;
     private readonly Dictionary<(Guid, int), bool> _joyBtnState = [];
@@ -160,12 +160,11 @@ public class PTTManager : IDisposable
             {
                 try
                 {
-                    var dev = _di.CreateDevice(info.InstanceGuid);
-                    dev.SetDataFormat<RawJoystickState>();
-                    dev.SetCooperativeLevel(nint.Zero,
+                    var js = new Vortice.DirectInput.Joystick(_di, info.InstanceGuid);
+                    js.SetCooperativeLevel(nint.Zero,
                         CooperativeLevel.Background | CooperativeLevel.NonExclusive);
-                    dev.Acquire();
-                    _joysticks.Add((dev, info.InstanceGuid, info.InstanceName.TrimEnd('\0')));
+                    js.Acquire();
+                    _joysticks.Add((js, info.InstanceGuid, info.InstanceName.TrimEnd('\0')));
                 }
                 catch { /* skip devices we can't acquire */ }
             }
@@ -179,11 +178,11 @@ public class PTTManager : IDisposable
                 try
                 {
                     dev.Poll();
-                    var state = dev.GetCurrentState<RawJoystickState>();
+                    var state = dev.GetCurrentState();
 
                     for (int btn = 0; btn < state.Buttons.Length; btn++)
                     {
-                        var pressed = (state.Buttons[btn] & 0x80) != 0;
+                        var pressed = state.Buttons[btn];
                         var key     = (guid, btn);
                         var wasDown = _joyBtnState.GetValueOrDefault(key, false);
 

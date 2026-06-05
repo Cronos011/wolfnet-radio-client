@@ -366,9 +366,8 @@ public partial class MainWindow : Window
                 if (!TryPollJoystick(entry.Guid, out var btns)) continue;
                 for (int b = 0; b < btns.Length; b++)
                 {
-                    var pressed = (btns[b] & 0x80) != 0;
                     var key = (entry.Guid, b);
-                    if (pressed && !startJoyState.GetValueOrDefault(key))
+                    if (btns[b] && !startJoyState.GetValueOrDefault(key))
                         return new WolfNETRadio.Input.InputTrigger
                         {
                             DeviceType      = WolfNETRadio.Input.InputDeviceType.Joystick,
@@ -399,34 +398,32 @@ public partial class MainWindow : Window
         {
             if (!TryPollJoystick(entry.Guid, out var btns)) continue;
             for (int b = 0; b < btns.Length; b++)
-                snap[(entry.Guid, b)] = (btns[b] & 0x80) != 0;
+                snap[(entry.Guid, b)] = btns[b];
         }
         return snap;
     }
 
-    // Cache DirectInput device instances for the capture poller
-    private readonly Dictionary<System.Guid, Vortice.DirectInput.IDirectInputDevice8> _captureDiDevs = [];
+    // Cache DirectInput Joystick instances for the capture poller
+    private readonly Dictionary<System.Guid, Vortice.DirectInput.Joystick> _captureDiDevs = [];
     private Vortice.DirectInput.IDirectInput8? _captureDi;
 
-    private bool TryPollJoystick(System.Guid guid, out byte[] buttons)
+    private bool TryPollJoystick(System.Guid guid, out bool[] buttons)
     {
         buttons = [];
         try
         {
             _captureDi ??= Vortice.DirectInput.DInput.DirectInput8Create();
-            if (!_captureDiDevs.TryGetValue(guid, out var dev))
+            if (!_captureDiDevs.TryGetValue(guid, out var js))
             {
-                dev = _captureDi.CreateDevice(guid);
-                dev.SetDataFormat<Vortice.DirectInput.RawJoystickState>();
-                dev.SetCooperativeLevel(nint.Zero,
+                js = new Vortice.DirectInput.Joystick(_captureDi, guid);
+                js.SetCooperativeLevel(nint.Zero,
                     Vortice.DirectInput.CooperativeLevel.Background |
                     Vortice.DirectInput.CooperativeLevel.NonExclusive);
-                dev.Acquire();
-                _captureDiDevs[guid] = dev;
+                js.Acquire();
+                _captureDiDevs[guid] = js;
             }
-            dev.Poll();
-            var state = dev.GetCurrentState<Vortice.DirectInput.RawJoystickState>();
-            buttons = state.Buttons;
+            js.Poll();
+            buttons = js.GetCurrentState().Buttons;
             return true;
         }
         catch { return false; }
