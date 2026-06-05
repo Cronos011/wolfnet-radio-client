@@ -4,6 +4,6 @@
              RequestedThemeVariant="Dark">
     <Application.Styles>
         <FluentTheme />
-        <StyleInclude Source="avares://WolfNETRadio.Linux/Themes/AppStyles.axaml" />
+        <StyleInclude Source="avares://WolfNETRadio/Themes/AppStyles.axaml" />
     </Application.Styles>
 </Application>
