@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using WolfNETRadio.Audio;
 using WolfNETRadio.ViewModels;
 using WolfNETRadio.Views.Overlays;
+using WolfNETRadio.Input;
+using System.Linq;
 
 namespace WolfNETRadio.Views;
 
@@ -19,6 +21,9 @@ public partial class MainWindow : Window
     private readonly AudioOutputManager _audioOut;
     private readonly GwReconAuthClient _authClient;
     private List<MissionPreset> _loadedPresets = [];
+    private readonly KeyBindingStore _keyStore = new();
+    private int _captureRadioId = -1;
+    private bool _captureModifier = false;
 
     public MainWindow()
     {
@@ -50,6 +55,8 @@ public partial class MainWindow : Window
         OutputDeviceCombo.SelectionChanged += (_, _) =>
             vm.SelectedOutputDevice = OutputDeviceCombo.SelectedItem?.ToString();
 
+        BuildKeyBindingRows();
+
         // Wire settings toggles to ViewModel
         RadioEffectsCheck.Checked += (_, _) => vm.RadioEffectsEnabled = true;
         RadioEffectsCheck.Unchecked += (_, _) => vm.RadioEffectsEnabled = false;
@@ -64,13 +71,17 @@ public partial class MainWindow : Window
         vm.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(MainViewModel.VuLevel))
-                Dispatcher.Invoke(() => VuMeter.Level = vm.VuLevel);
+                Dispatcher.Invoke(() => VuMeter.Level = (double)vm.VuLevel * 100.0);
         };
 
         // Wire connection state to UI
         vm.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName is nameof(MainViewModel.ServerStatus) or nameof(MainViewModel.IsConnected) or nameof(MainViewModel.StatusMessage))
+            if (e.PropertyName is nameof(MainViewModel.ServerStatus)
+                or nameof(MainViewModel.IsConnected)
+                or nameof(MainViewModel.StatusMessage)
+                or nameof(MainViewModel.VoipStatus)
+                or nameof(MainViewModel.IsVoipConnected))
                 Dispatcher.Invoke(UpdateConnectionUI);
         };
     }
@@ -87,12 +98,202 @@ public partial class MainWindow : Window
         ServerStatusText.Text = connected ? "CONNECTED" : "DISCONNECTED";
         if (StatusLabel != null) StatusLabel.Text = vm.StatusMessage == "Ready" ? "" : vm.StatusMessage;
 
+        // VOIP status
+        VoipStatusDot.Fill = vm.IsVoipConnected
+            ? new SolidColorBrush(Color.FromRgb(0x43, 0xE5, 0x9A))
+            : new SolidColorBrush(Color.FromRgb(0xFF, 0x44, 0x44));
+        VoipStatusText.Text = vm.IsVoipConnected ? "VOIP" : "VOIP";
+        VoipStatusText.Foreground = vm.IsVoipConnected
+            ? new SolidColorBrush(Color.FromRgb(0x43, 0xE5, 0x9A))
+            : new SolidColorBrush(Color.FromRgb(0x8A, 0x96, 0xA8));
+
         // Connect button
         ConnectButton.Content = connected ? "DISCONNECT" : "CONNECT";
         ConnectButton.Background = connected
             ? new SolidColorBrush(Color.FromRgb(0xFF, 0x44, 0x44))
             : new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0x17));
         ConnectButton.Foreground = new SolidColorBrush(Color.FromRgb(0x05, 0x08, 0x0C));
+    }
+
+    private void BuildKeyBindingRows()
+    {
+        KeyBindingRows.Children.Clear();
+        foreach (var binding in _keyStore.Bindings)
+        {
+            var row = BuildBindingRow(binding);
+            KeyBindingRows.Children.Add(row);
+        }
+    }
+
+    private UIElement BuildBindingRow(PttBinding binding)
+    {
+        var grid = new Grid { Margin = new Thickness(0, 2, 0, 2) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(130) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(10) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+
+        var dark = new SolidColorBrush(Color.FromRgb(0x0C, 0x11, 0x19));
+        var border = new SolidColorBrush(Color.FromRgb(0x1E, 0x2A, 0x3A));
+        var gold = new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0x17));
+        var muted = new SolidColorBrush(Color.FromRgb(0x8A, 0x96, 0xA8));
+        var cyan = new SolidColorBrush(Color.FromRgb(0x4F, 0xC3, 0xF7));
+        var font = new FontFamily("Consolas");
+
+        var label = new TextBlock
+        {
+            Text = binding.RadioLabel,
+            FontSize = 11,
+            Foreground = muted,
+            FontFamily = font,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(label, 0);
+        grid.Children.Add(label);
+
+        var primaryBox = new TextBox
+        {
+            Text = binding.PrimaryKeyDisplay,
+            IsReadOnly = true,
+            Background = dark,
+            Foreground = binding.PrimaryKey.HasValue ? cyan : muted,
+            BorderBrush = border,
+            BorderThickness = new Thickness(1),
+            FontFamily = font,
+            FontSize = 11,
+            Height = 24,
+            TextAlignment = TextAlignment.Center
+        };
+        Grid.SetColumn(primaryBox, 1);
+        grid.Children.Add(primaryBox);
+
+        var setBtn = new Button
+        {
+            Content = "SET",
+            Height = 24,
+            Margin = new Thickness(4, 0, 0, 0),
+            Background = dark,
+            Foreground = gold,
+            BorderBrush = border,
+            BorderThickness = new Thickness(1),
+            FontFamily = font,
+            FontSize = 9
+        };
+        Grid.SetColumn(setBtn, 2);
+        var capturedRadioId = binding.RadioId;
+        setBtn.Click += (_, _) => StartCapture(capturedRadioId, false, setBtn, primaryBox);
+        grid.Children.Add(setBtn);
+
+        var clearBtn = new Button
+        {
+            Content = "CLR",
+            Height = 24,
+            Margin = new Thickness(2, 0, 0, 0),
+            Background = dark,
+            Foreground = muted,
+            BorderBrush = border,
+            BorderThickness = new Thickness(1),
+            FontFamily = font,
+            FontSize = 9
+        };
+        Grid.SetColumn(clearBtn, 3);
+        clearBtn.Click += (_, _) =>
+        {
+            _keyStore.ClearPrimary(capturedRadioId);
+            primaryBox.Text = "[UNBOUND]";
+            primaryBox.Foreground = muted;
+        };
+        grid.Children.Add(clearBtn);
+
+        var modBox = new TextBox
+        {
+            Text = binding.ModifierKeyDisplay,
+            IsReadOnly = true,
+            Background = dark,
+            Foreground = binding.ModifierKey.HasValue ? cyan : muted,
+            BorderBrush = border,
+            BorderThickness = new Thickness(1),
+            FontFamily = font,
+            FontSize = 11,
+            Height = 24,
+            TextAlignment = TextAlignment.Center,
+            Margin = new Thickness(10, 0, 0, 0)
+        };
+        Grid.SetColumn(modBox, 5);
+        grid.Children.Add(modBox);
+
+        var setModBtn = new Button
+        {
+            Content = "SET",
+            Height = 24,
+            Margin = new Thickness(4, 0, 0, 0),
+            Background = dark,
+            Foreground = gold,
+            BorderBrush = border,
+            BorderThickness = new Thickness(1),
+            FontFamily = font,
+            FontSize = 9
+        };
+        Grid.SetColumn(setModBtn, 6);
+        setModBtn.Click += (_, _) => StartCapture(capturedRadioId, true, setModBtn, modBox);
+        grid.Children.Add(setModBtn);
+
+        var clearModBtn = new Button
+        {
+            Content = "CLR",
+            Height = 24,
+            Margin = new Thickness(2, 0, 0, 0),
+            Background = dark,
+            Foreground = muted,
+            BorderBrush = border,
+            BorderThickness = new Thickness(1),
+            FontFamily = font,
+            FontSize = 9
+        };
+        Grid.SetColumn(clearModBtn, 7);
+        clearModBtn.Click += (_, _) =>
+        {
+            _keyStore.ClearModifier(capturedRadioId);
+            modBox.Text = "None";
+            modBox.Foreground = muted;
+        };
+        grid.Children.Add(clearModBtn);
+
+        return grid;
+    }
+
+    private void StartCapture(int radioId, bool modifier, Button btn, TextBox display)
+    {
+        _captureRadioId = radioId;
+        _captureModifier = modifier;
+        btn.Content = "...";
+        display.Text = "Press a key...";
+        display.Foreground = new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0x17));
+        PreviewKeyDown += CaptureKeyHandler;
+        Focus();
+    }
+
+    private void CaptureKeyHandler(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        PreviewKeyDown -= CaptureKeyHandler;
+        var key = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
+
+        if (_captureModifier)
+            _keyStore.SetModifier(_captureRadioId, key);
+        else
+            _keyStore.SetPrimary(_captureRadioId, key);
+
+        if (!_captureModifier)
+        {
+            var vm = (MainViewModel)DataContext;
+        }
+
+        BuildKeyBindingRows();
+        e.Handled = true;
     }
 
     private void CommsArrayButton_Checked(object sender, RoutedEventArgs e)

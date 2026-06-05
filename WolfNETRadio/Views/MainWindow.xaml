@@ -251,142 +251,27 @@
                 <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1" Margin="0,0,0,12" Padding="16">
                     <StackPanel>
                         <TextBlock Text="⌨  CONTROLS" FontSize="11" FontWeight="Bold"
-                                   Foreground="#4FC3F7" FontFamily="Segoe UI" Margin="0,0,0,10" />
-                        <TextBlock Text="Click a key button then press a key to bind PTT." FontSize="10"
-                                   Foreground="#8A96A8" FontFamily="Segoe UI" Margin="0,0,0,10" />
+                                   Foreground="#4FC3F7" FontFamily="Segoe UI" Margin="0,0,0,4" />
+                        <TextBlock Text="Click SET then press a key to bind. Modifier is an optional hold key (e.g. Ctrl, Shift)."
+                                   FontSize="10" Foreground="#8A96A8" FontFamily="Segoe UI" Margin="0,0,0,10" TextWrapping="Wrap" />
 
-                        <ItemsControl x:Name="PttBindingsList">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="70" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="60" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding Label}" FontFamily="Consolas" FontSize="10"
-                                                   Foreground="#8A96A8" VerticalAlignment="Center" />
-                                        <Button Grid.Column="1" Content="{Binding KeyDisplay}" Height="24"
-                                                Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                                FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
-                                        <Button Grid.Column="2" Content="CLEAR" Height="24"
-                                                Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
-                                                FontFamily="Consolas" FontSize="10" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="40" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="BINDING" FontSize="9" Foreground="#4A5568" FontFamily="Consolas" />
+                            <TextBlock Grid.Column="1" Text="PRIMARY KEY" FontSize="9" Foreground="#4A5568" FontFamily="Consolas" />
+                            <TextBlock Grid.Column="5" Text="MODIFIER" FontSize="9" Foreground="#4A5568" FontFamily="Consolas" />
+                        </Grid>
 
-                        <StackPanel x:Name="StaticPttRows">
-                            <Grid Margin="0,2">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="70" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="60" />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="CH-1" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
-                                <Button Grid.Row="0" Grid.Column="1" Content="[UNBOUND]" Height="24"
-                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
-                                <Button Grid.Row="0" Grid.Column="2" Content="CLEAR" Height="24"
-                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" />
-
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="CH-2" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
-                                <Button Grid.Row="1" Grid.Column="1" Content="[UNBOUND]" Height="24"
-                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
-                                <Button Grid.Row="1" Grid.Column="2" Content="CLEAR" Height="24"
-                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" />
-
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="CH-3" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
-                                <Button Grid.Row="2" Grid.Column="1" Content="[UNBOUND]" Height="24"
-                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
-                                <Button Grid.Row="2" Grid.Column="2" Content="CLEAR" Height="24"
-                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" />
-
-                                <TextBlock Grid.Row="3" Grid.Column="0" Text="CH-4" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
-                                <Button Grid.Row="3" Grid.Column="1" Content="[UNBOUND]" Height="24"
-                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
-                                <Button Grid.Row="3" Grid.Column="2" Content="CLEAR" Height="24"
-                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" />
-
-                                <TextBlock Grid.Row="4" Grid.Column="0" Text="CH-5" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
-                                <Button Grid.Row="4" Grid.Column="1" Content="[UNBOUND]" Height="24"
-                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
-                                <Button Grid.Row="4" Grid.Column="2" Content="CLEAR" Height="24"
-                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" />
-
-                                <TextBlock Grid.Row="5" Grid.Column="0" Text="CH-6" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
-                                <Button Grid.Row="5" Grid.Column="1" Content="[UNBOUND]" Height="24"
-                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
-                                <Button Grid.Row="5" Grid.Column="2" Content="CLEAR" Height="24"
-                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" />
-
-                                <TextBlock Grid.Row="6" Grid.Column="0" Text="CH-7" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
-                                <Button Grid.Row="6" Grid.Column="1" Content="[UNBOUND]" Height="24"
-                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
-                                <Button Grid.Row="6" Grid.Column="2" Content="CLEAR" Height="24"
-                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" />
-
-                                <TextBlock Grid.Row="7" Grid.Column="0" Text="CH-8" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
-                                <Button Grid.Row="7" Grid.Column="1" Content="[UNBOUND]" Height="24"
-                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
-                                <Button Grid.Row="7" Grid.Column="2" Content="CLEAR" Height="24"
-                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" />
-
-                                <TextBlock Grid.Row="8" Grid.Column="0" Text="CH-9" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
-                                <Button Grid.Row="8" Grid.Column="1" Content="[UNBOUND]" Height="24"
-                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
-                                <Button Grid.Row="8" Grid.Column="2" Content="CLEAR" Height="24"
-                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" />
-
-                                <TextBlock Grid.Row="9" Grid.Column="0" Text="CH-10" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
-                                <Button Grid.Row="9" Grid.Column="1" Content="[UNBOUND]" Height="24"
-                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
-                                <Button Grid.Row="9" Grid.Column="2" Content="CLEAR" Height="24"
-                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" />
-
-                                <TextBlock Grid.Row="10" Grid.Column="0" Text="COMMON" FontFamily="Consolas" FontSize="10" Foreground="#8A96A8" VerticalAlignment="Center" />
-                                <Button Grid.Row="10" Grid.Column="1" Content="[UNBOUND]" Height="24"
-                                        Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" Margin="0,0,6,0" />
-                                <Button Grid.Row="10" Grid.Column="2" Content="CLEAR" Height="24"
-                                        Background="#0C1119" Foreground="#8A96A8" BorderBrush="#1E2A3A" BorderThickness="1"
-                                        FontFamily="Consolas" FontSize="10" />
-                            </Grid>
-                        </StackPanel>
+                        <StackPanel x:Name="KeyBindingRows" />
                     </StackPanel>
                 </Border>
 
