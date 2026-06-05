@@ -11,7 +11,7 @@ namespace WolfNETRadio.Audio;
 /// </summary>
 public class LinuxAudioInputManager : IDisposable
 {
-    private Stream? _stream;
+    private PortAudioSharp.Stream? _stream;
     private float _volumeMultiplier = 1.0f;
     private const int FRAME_SAMPLES = OpusProcessor.FRAME_SAMPLES; // 960 @ 16kHz
     private const int SAMPLE_RATE   = OpusProcessor.SAMPLE_RATE;
@@ -68,7 +68,7 @@ public class LinuxAudioInputManager : IDisposable
             hostApiSpecificStreamInfo = IntPtr.Zero,
         };
 
-        _stream = new Stream(
+        _stream = new PortAudioSharp.Stream(
             inParams, null,
             SAMPLE_RATE,
             (uint)FRAME_SAMPLES,

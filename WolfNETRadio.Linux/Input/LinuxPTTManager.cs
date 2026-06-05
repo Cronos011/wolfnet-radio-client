@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using WpfKey = Avalonia.Input.Key;
 
 namespace WolfNETRadio.Input;
 

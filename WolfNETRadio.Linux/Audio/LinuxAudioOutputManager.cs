@@ -10,7 +10,7 @@ namespace WolfNETRadio.Audio;
 /// </summary>
 public class LinuxAudioOutputManager : IDisposable
 {
-    private Stream?  _stream;
+    private PortAudioSharp.Stream? _stream;
     private readonly object _lock = new();
 
     // clientGuid -> (ringbuffer, pan -1..+1)
@@ -64,7 +64,7 @@ public class LinuxAudioOutputManager : IDisposable
             hostApiSpecificStreamInfo = IntPtr.Zero,
         };
 
-        _stream = new Stream(
+        _stream = new PortAudioSharp.Stream(
             null, outParams,
             SAMPLE_RATE,
             (uint)FRAME_SAMPLES,

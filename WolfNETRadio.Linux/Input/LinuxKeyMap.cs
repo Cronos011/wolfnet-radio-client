@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Windows.Input; // WpfKey alias resolves here for the enum values
+using WpfKey = Avalonia.Input.Key;
 
 namespace WolfNETRadio.Input;
 

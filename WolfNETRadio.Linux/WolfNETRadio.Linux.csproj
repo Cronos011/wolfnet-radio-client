@@ -26,6 +26,8 @@
     <!-- Opus codec (pure .NET, no native deps) -->
     <PackageReference Include="Concentus"                  Version="2.2.2" />
     <PackageReference Include="Concentus.OggFile"          Version="1.0.3" />
+    <!-- JSON serialization for settings -->
+    <PackageReference Include="System.Text.Json"           Version="8.0.5" />
   </ItemGroup>
 
   <!-- ── Shared core files from the WPF project ───────────────────── -->
