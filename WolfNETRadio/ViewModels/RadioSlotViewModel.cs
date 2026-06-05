@@ -22,6 +22,23 @@ public partial class RadioSlotViewModel : ObservableObject
     public int RadioId => _slot.RadioId;
     public string SlotLabel => _slot.IsIntercom ? "INTERCOM" : $"CH-{_slot.RadioId}";
     public string DisplayCode => _slot.DisplayCode;
+
+    /// <summary>
+    /// Two-way bindable channel code. Setting this updates the underlying slot
+    /// and sends an SRS update, allowing overlay XAMLs to bind TwoWay.
+    /// </summary>
+    public int ChannelCode
+    {
+        get => _slot.ChannelCode;
+        set
+        {
+            var clamped = Math.Clamp(value, 0, 9999);
+            if (_slot.ChannelCode == clamped) return;
+            _slot.ChannelCode = clamped;
+            OnPropertyChanged();
+            _ = _control.SendUpdateAsync();
+        }
+    }
     public bool IsSelected => _slot.IsSelected;
     public bool IsTransmitting => _slot.IsTransmitting;
     public bool IsReceiving => _slot.IsReceiving;

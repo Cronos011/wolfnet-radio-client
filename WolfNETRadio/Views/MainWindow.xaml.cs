@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     private readonly AudioInputManager _audioIn;
     private readonly AudioOutputManager _audioOut;
     private readonly GwReconAuthClient _authClient;
+    private readonly PTTManager _pttManager;
     private List<MissionPreset> _loadedPresets = [];
     private readonly KeyBindingStore _keyStore = new();
     private int _captureRadioId = -1;
@@ -33,6 +34,8 @@ public partial class MainWindow : Window
         _audioIn = App.Services.GetRequiredService<AudioInputManager>();
         _audioOut = App.Services.GetRequiredService<AudioOutputManager>();
         _authClient = App.Services.GetRequiredService<GwReconAuthClient>();
+        _pttManager = App.Services.GetRequiredService<PTTManager>();
+        _pttManager.SetBindings(_keyStore.Bindings);
 
         var vm = (MainViewModel)DataContext;
 
@@ -140,12 +143,17 @@ public partial class MainWindow : Window
     private void BuildKeyBindingRows()
     {
         KeyBindingRows.Children.Clear();
+        // Enumerate connected joysticks once for the label lookup
+        _joystickDevices = _pttManager.GetJoystickDevices();
         foreach (var binding in _keyStore.Bindings)
         {
             var row = BuildBindingRow(binding);
             KeyBindingRows.Children.Add(row);
         }
     }
+
+    // Cached joystick list for display in binding rows
+    private List<(System.Guid Guid, string Name)> _joystickDevices = [];
 
     private UIElement BuildBindingRow(PttBinding binding)
     {
@@ -182,7 +190,7 @@ public partial class MainWindow : Window
             Text = binding.PrimaryKeyDisplay,
             IsReadOnly = true,
             Background = dark,
-            Foreground = binding.PrimaryKey.HasValue ? cyan : muted,
+            Foreground = binding.Primary != null ? cyan : muted,
             BorderBrush = border,
             BorderThickness = new Thickness(1),
             FontFamily = font,
@@ -236,7 +244,7 @@ public partial class MainWindow : Window
             Text = binding.ModifierKeyDisplay,
             IsReadOnly = true,
             Background = dark,
-            Foreground = binding.ModifierKey.HasValue ? cyan : muted,
+            Foreground = binding.Modifier != null ? cyan : muted,
             BorderBrush = border,
             BorderThickness = new Thickness(1),
             FontFamily = font,
@@ -288,34 +296,162 @@ public partial class MainWindow : Window
         return grid;
     }
 
+    // Capture state
+    private System.Threading.CancellationTokenSource? _captureCts;
+
     private void StartCapture(int radioId, bool modifier, Button btn, TextBox display)
     {
-        _captureRadioId = radioId;
+        // Cancel any in-progress capture
+        _captureCts?.Cancel();
+        _captureCts = new System.Threading.CancellationTokenSource();
+        var cts = _captureCts;
+
+        _captureRadioId  = radioId;
         _captureModifier = modifier;
-        btn.Content = "...";
-        display.Text = "Press a key...";
+        btn.Content     = "...";
+        display.Text    = "Press key/btn/joy...";
         display.Foreground = new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0x17));
+
+        // Keyboard (highest priority — runs on UI thread via WPF)
         PreviewKeyDown += CaptureKeyHandler;
+
+        // Mouse + joystick capture via background polling
+        System.Threading.Tasks.Task.Run(async () =>
+        {
+            try
+            {
+                var trigger = await WaitForAnyInputAsync(cts.Token);
+                if (trigger == null) return;
+
+                Dispatcher.Invoke(() =>
+                {
+                    PreviewKeyDown -= CaptureKeyHandler;
+                    if (_captureModifier) _keyStore.SetModifier(_captureRadioId, trigger);
+                    else                  _keyStore.SetPrimary(_captureRadioId,  trigger);
+                    BuildKeyBindingRows();
+                    _pttManager.SetBindings(_keyStore.Bindings);
+                });
+            }
+            catch (OperationCanceledException) { }
+        });
+
         Focus();
+    }
+
+    /// <summary>
+    /// Polls for mouse button or joystick button press in the background.
+    /// Returns null if cancelled. Used alongside PreviewKeyDown for keyboard.
+    /// </summary>
+    private async System.Threading.Tasks.Task<WolfNETRadio.Input.InputTrigger?> WaitForAnyInputAsync(
+        System.Threading.CancellationToken ct)
+    {
+        // Snapshot button states so we only fire on NEW presses
+        var startMouseState = GetCurrentMouseButtons();
+        var startJoyState   = SnapshotJoyState();
+
+        while (!ct.IsCancellationRequested)
+        {
+            // Check mouse
+            foreach (var vk in new[] { 2, 4, 5, 6 }) // RBtn, MBtn, X1, X2 (skip LBtn for usability)
+            {
+                var now = (Win32Native.GetAsyncKeyState(vk) & 0x8000) != 0;
+                if (now && !startMouseState.GetValueOrDefault(vk))
+                    return new WolfNETRadio.Input.InputTrigger
+                        { DeviceType = WolfNETRadio.Input.InputDeviceType.Mouse, MouseVk = vk };
+            }
+
+            // Check joystick
+            foreach (var entry in _joystickDevices)
+            {
+                if (!TryPollJoystick(entry.Guid, out var btns)) continue;
+                for (int b = 0; b < btns.Length; b++)
+                {
+                    var pressed = (btns[b] & 0x80) != 0;
+                    var key = (entry.Guid, b);
+                    if (pressed && !startJoyState.GetValueOrDefault(key))
+                        return new WolfNETRadio.Input.InputTrigger
+                        {
+                            DeviceType      = WolfNETRadio.Input.InputDeviceType.Joystick,
+                            JoystickGuid    = entry.Guid,
+                            JoystickName    = entry.Name,
+                            JoystickButton  = b
+                        };
+                }
+            }
+
+            await System.Threading.Tasks.Task.Delay(16, ct);
+        }
+        return null;
+    }
+
+    private Dictionary<int, bool> GetCurrentMouseButtons()
+    {
+        var d = new Dictionary<int, bool>();
+        foreach (var vk in new[] { 1, 2, 4, 5, 6 })
+            d[vk] = (Win32Native.GetAsyncKeyState(vk) & 0x8000) != 0;
+        return d;
+    }
+
+    private Dictionary<(System.Guid, int), bool> SnapshotJoyState()
+    {
+        var snap = new Dictionary<(System.Guid, int), bool>();
+        foreach (var entry in _joystickDevices)
+        {
+            if (!TryPollJoystick(entry.Guid, out var btns)) continue;
+            for (int b = 0; b < btns.Length; b++)
+                snap[(entry.Guid, b)] = (btns[b] & 0x80) != 0;
+        }
+        return snap;
+    }
+
+    // Cache DirectInput device instances for the capture poller
+    private readonly Dictionary<System.Guid, Vortice.DirectInput.IDirectInputDevice8> _captureDiDevs = [];
+    private Vortice.DirectInput.IDirectInput8? _captureDi;
+
+    private bool TryPollJoystick(System.Guid guid, out byte[] buttons)
+    {
+        buttons = [];
+        try
+        {
+            _captureDi ??= Vortice.DirectInput.DInput.DirectInput8Create();
+            if (!_captureDiDevs.TryGetValue(guid, out var dev))
+            {
+                dev = _captureDi.CreateDevice(guid);
+                dev.SetDataFormat<Vortice.DirectInput.RawJoystickState>();
+                dev.SetCooperativeLevel(nint.Zero,
+                    Vortice.DirectInput.CooperativeLevel.Background |
+                    Vortice.DirectInput.CooperativeLevel.NonExclusive);
+                dev.Acquire();
+                _captureDiDevs[guid] = dev;
+            }
+            dev.Poll();
+            var state = dev.GetCurrentState<Vortice.DirectInput.RawJoystickState>();
+            buttons = state.Buttons;
+            return true;
+        }
+        catch { return false; }
     }
 
     private void CaptureKeyHandler(object sender, System.Windows.Input.KeyEventArgs e)
     {
+        _captureCts?.Cancel(); // stop background mouse/joy capture
         PreviewKeyDown -= CaptureKeyHandler;
-        var key = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
+        var key     = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
+        var trigger = new WolfNETRadio.Input.InputTrigger
+            { DeviceType = WolfNETRadio.Input.InputDeviceType.Keyboard, KeyboardKey = key };
 
-        if (_captureModifier)
-            _keyStore.SetModifier(_captureRadioId, key);
-        else
-            _keyStore.SetPrimary(_captureRadioId, key);
+        if (_captureModifier) _keyStore.SetModifier(_captureRadioId, trigger);
+        else                   _keyStore.SetPrimary(_captureRadioId,  trigger);
 
-        if (!_captureModifier)
-        {
-            var vm = (MainViewModel)DataContext;
-        }
-
+        _pttManager.SetBindings(_keyStore.Bindings);
         BuildKeyBindingRows();
         e.Handled = true;
+    }
+
+    private static class Win32Native
+    {
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern short GetAsyncKeyState(int vk);
     }
 
     private void CommsArrayButton_Checked(object sender, RoutedEventArgs e)

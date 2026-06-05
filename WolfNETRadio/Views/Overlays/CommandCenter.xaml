@@ -38,16 +38,16 @@
             </Border>
 
             <UniformGrid Grid.Row="1" Columns="5" Rows="2" Margin="6" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <controls:RadioSlotControl RadioId="1" SlotLabelText="CH-1" Width="168" Height="100" />
-                <controls:RadioSlotControl RadioId="2" SlotLabelText="CH-2" Width="168" Height="100" />
-                <controls:RadioSlotControl RadioId="3" SlotLabelText="CH-3" Width="168" Height="100" />
-                <controls:RadioSlotControl RadioId="4" SlotLabelText="CH-4" Width="168" Height="100" />
-                <controls:RadioSlotControl RadioId="5" SlotLabelText="CH-5" Width="168" Height="100" />
-                <controls:RadioSlotControl RadioId="6" SlotLabelText="CH-6" Width="168" Height="100" />
-                <controls:RadioSlotControl RadioId="7" SlotLabelText="CH-7" Width="168" Height="100" />
-                <controls:RadioSlotControl RadioId="8" SlotLabelText="CH-8" Width="168" Height="100" />
-                <controls:RadioSlotControl RadioId="9" SlotLabelText="CH-9" Width="168" Height="100" />
-                <controls:RadioSlotControl RadioId="10" SlotLabelText="CH-10" Width="168" Height="100" />
+                <controls:RadioSlotControl RadioId="1"  SlotLabelText="CH-1"  Width="168" Height="100" ChannelCode="{Binding RadioSlots[0].ChannelCode, Mode=TwoWay}" />
+                <controls:RadioSlotControl RadioId="2"  SlotLabelText="CH-2"  Width="168" Height="100" ChannelCode="{Binding RadioSlots[1].ChannelCode, Mode=TwoWay}" />
+                <controls:RadioSlotControl RadioId="3"  SlotLabelText="CH-3"  Width="168" Height="100" ChannelCode="{Binding RadioSlots[2].ChannelCode, Mode=TwoWay}" />
+                <controls:RadioSlotControl RadioId="4"  SlotLabelText="CH-4"  Width="168" Height="100" ChannelCode="{Binding RadioSlots[3].ChannelCode, Mode=TwoWay}" />
+                <controls:RadioSlotControl RadioId="5"  SlotLabelText="CH-5"  Width="168" Height="100" ChannelCode="{Binding RadioSlots[4].ChannelCode, Mode=TwoWay}" />
+                <controls:RadioSlotControl RadioId="6"  SlotLabelText="CH-6"  Width="168" Height="100" ChannelCode="{Binding RadioSlots[5].ChannelCode, Mode=TwoWay}" />
+                <controls:RadioSlotControl RadioId="7"  SlotLabelText="CH-7"  Width="168" Height="100" ChannelCode="{Binding RadioSlots[6].ChannelCode, Mode=TwoWay}" />
+                <controls:RadioSlotControl RadioId="8"  SlotLabelText="CH-8"  Width="168" Height="100" ChannelCode="{Binding RadioSlots[7].ChannelCode, Mode=TwoWay}" />
+                <controls:RadioSlotControl RadioId="9"  SlotLabelText="CH-9"  Width="168" Height="100" ChannelCode="{Binding RadioSlots[8].ChannelCode, Mode=TwoWay}" />
+                <controls:RadioSlotControl RadioId="10" SlotLabelText="CH-10" Width="168" Height="100" ChannelCode="{Binding RadioSlots[9].ChannelCode, Mode=TwoWay}" />
             </UniformGrid>
 
             <Separator Grid.Row="2" Margin="6,0" />
@@ -57,7 +57,7 @@
                         <ColumnDefinition Width="180" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                <controls:RadioSlotControl RadioId="0" SlotLabelText="INTERCOM" Width="168" Height="60" ShowStepButtons="False" />
+                <controls:RadioSlotControl RadioId="0" SlotLabelText="INTERCOM" Width="168" Height="60" ShowStepButtons="False" ChannelCode="{Binding Intercom.ChannelCode, Mode=TwoWay}" />
                 <Slider Grid.Column="1" Width="140" Minimum="0.3" Maximum="1"
                         Value="{Binding ElementName=RootWindow, Path=Opacity, Mode=TwoWay}"
                         HorizontalAlignment="Center" VerticalAlignment="Center" />

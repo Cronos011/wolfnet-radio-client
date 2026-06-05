@@ -156,7 +156,7 @@
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Port" FontSize="10" Foreground="#8A96A8" FontFamily="Segoe UI" Margin="0,2" />
                                 <TextBlock Grid.Row="1" Grid.Column="1" Text="5002" FontSize="10" Foreground="#EDF2F8" FontFamily="Consolas" Margin="0,2" />
                                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Clients" FontSize="10" Foreground="#8A96A8" FontFamily="Segoe UI" Margin="0,2" />
-                                <TextBlock x:Name="ClientCountText" Grid.Row="2" Grid.Column="1" Text="0" FontSize="10" Foreground="#4FC3F7" FontFamily="Consolas" Margin="0,2" />
+                                <TextBlock x:Name="ClientCountText" Grid.Row="2" Grid.Column="1" Text="{Binding ConnectedClientCount}" FontSize="10" Foreground="#4FC3F7" FontFamily="Consolas" Margin="0,2" />
                             </Grid>
                         </StackPanel>
                     </Grid>
