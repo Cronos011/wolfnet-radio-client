@@ -39,6 +39,7 @@ public partial class SRSControlClient : ObservableObject, IDisposable
             _cts = new CancellationTokenSource();
             _ = Task.Run(() => ReceiveLoopAsync(_cts.Token));
             _ = Task.Run(() => PingLoopAsync(_cts.Token));
+            _ = Task.Run(() => ClientCountPollLoopAsync(_cts.Token));
             await SendUpdateAsync();
         }
         catch
@@ -160,6 +161,53 @@ public partial class SRSControlClient : ObservableObject, IDisposable
         }
         catch (OperationCanceledException)
         {
+        }
+    }
+
+    /// <summary>
+    /// Polls the SRS HTTP API every 5 seconds to keep ConnectedClientCount
+    /// current even before a Sync message arrives from the TCP connection.
+    /// </summary>
+    private async Task ClientCountPollLoopAsync(CancellationToken ct)
+    {
+        using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+        // Host is parsed from ServerAddress on ClientState
+        string? host = null;
+        try
+        {
+            var addr = _state.ServerAddress;
+            var colonIdx = addr.IndexOf(':');
+            host = colonIdx > 0 ? addr[..colonIdx] : addr;
+        }
+        catch { return; }
+
+        while (!ct.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5), ct);
+                if (ct.IsCancellationRequested) break;
+
+                // Try SRS HTTP API first (port 8080 on the same host)
+                var url = $"http://{host}:8080/clients";
+                try
+                {
+                    using var req = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
+                    // No API key needed for client count on public-facing SRS servers;
+                    // best-effort — silently ignore failures.
+                    using var resp = await http.SendAsync(req, ct);
+                    if (resp.IsSuccessStatusCode)
+                    {
+                        var json = await resp.Content.ReadAsStringAsync(ct);
+                        using var doc = System.Text.Json.JsonDocument.Parse(json);
+                        if (doc.RootElement.TryGetProperty("Clients", out var clients))
+                            _state.ConnectedClientCount = clients.GetArrayLength();
+                    }
+                }
+                catch { /* best-effort */ }
+            }
+            catch (OperationCanceledException) { break; }
+            catch { /* ignore */ }
         }
     }
 

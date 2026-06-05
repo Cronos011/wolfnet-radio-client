@@ -40,6 +40,33 @@ public partial class RadioSlot : ObservableObject
     // ── RX info (cleared after 500ms silence) ───────────────────────────
     [ObservableProperty] private string _receivingCallsign = string.Empty;
 
+    // ── Partial callbacks — propagate computed property changes to all subscribers ──
+    // CommunityToolkit only fires PropertyChanged for the property that changed.
+    // Since ChannelCode/DisplayCode/FrequencyHz are computed from A/B codes and
+    // IsChannelA, we need to explicitly notify them whenever inputs change.
+    // This ensures overlay ViewModels (which mirror slot.PropertyChanged) also update.
+
+    partial void OnChannelACodeChanged(int value)
+    {
+        OnPropertyChanged(nameof(ChannelCode));
+        OnPropertyChanged(nameof(DisplayCode));
+        OnPropertyChanged(nameof(FrequencyHz));
+    }
+
+    partial void OnChannelBCodeChanged(int value)
+    {
+        OnPropertyChanged(nameof(ChannelCode));
+        OnPropertyChanged(nameof(DisplayCode));
+        OnPropertyChanged(nameof(FrequencyHz));
+    }
+
+    partial void OnIsChannelAChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ChannelCode));
+        OnPropertyChanged(nameof(DisplayCode));
+        OnPropertyChanged(nameof(FrequencyHz));
+    }
+
     // ── Computed properties ─────────────────────────────────────────────────────
 
     /// <summary>Active channel code (computed from A/B memory)</summary>
