@@ -162,6 +162,40 @@
                     </Grid>
                 </Border>
 
+                <!-- ── Card: Server Presets ────────────────────────────── -->
+                <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1" Margin="0,0,0,12" Padding="16">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="📋  SERVER PRESETS" FontSize="11" FontWeight="Bold"
+                                       Foreground="#4FC3F7" FontFamily="Segoe UI" VerticalAlignment="Center" />
+                            <Button x:Name="RefreshPresetsButton" Grid.Column="1" Content="REFRESH"
+                                    Height="22" Padding="10,0" FontFamily="Consolas" FontSize="9"
+                                    Background="#0C1119" Foreground="#D4A017" BorderBrush="#1E2A3A" BorderThickness="1"
+                                    Click="RefreshPresets_Click" />
+                        </Grid>
+                        <TextBlock Text="Missions you are signed up for with radio channel assignments."
+                                   FontSize="10" Foreground="#8A96A8" FontFamily="Segoe UI"
+                                   Margin="0,6,0,8" TextWrapping="Wrap" />
+                        <ComboBox x:Name="MissionPresetsCombo"
+                                  Height="28" Background="#0C1119" Foreground="#EDF2F8"
+                                  BorderBrush="#1E2A3A" FontFamily="Segoe UI" FontSize="11"
+                                  SelectionChanged="MissionPresetsCombo_SelectionChanged">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="Foreground" Value="#EDF2F8" />
+                                    <Setter Property="Background" Value="#0C1119" />
+                                    <Setter Property="FontFamily" Value="Segoe UI" />
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+                        <ItemsControl x:Name="PresetChannelsList" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
                 <Border Background="#090E16" BorderBrush="#1E2A3A" BorderThickness="1" Margin="0,0,0,12" Padding="16">
                     <StackPanel>
                         <TextBlock Text="🔊  AUDIO" FontSize="11" FontWeight="Bold"
@@ -183,13 +217,29 @@
                                        FontFamily="Segoe UI" VerticalAlignment="Center" />
                             <ComboBox x:Name="InputDeviceCombo" Grid.Row="0" Grid.Column="1"
                                       Height="28" Background="#0C1119" Foreground="#EDF2F8"
-                                      BorderBrush="#1E2A3A" FontFamily="Segoe UI" FontSize="11" />
+                                      BorderBrush="#1E2A3A" FontFamily="Segoe UI" FontSize="11">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem">
+                                        <Setter Property="Foreground" Value="#EDF2F8" />
+                                        <Setter Property="Background" Value="#0C1119" />
+                                        <Setter Property="FontFamily" Value="Segoe UI" />
+                                    </Style>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
 
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Output" FontSize="11" Foreground="#8A96A8"
                                        FontFamily="Segoe UI" VerticalAlignment="Center" />
                             <ComboBox x:Name="OutputDeviceCombo" Grid.Row="2" Grid.Column="1"
                                       Height="28" Background="#0C1119" Foreground="#EDF2F8"
-                                      BorderBrush="#1E2A3A" FontFamily="Segoe UI" FontSize="11" />
+                                      BorderBrush="#1E2A3A" FontFamily="Segoe UI" FontSize="11">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem">
+                                        <Setter Property="Foreground" Value="#EDF2F8" />
+                                        <Setter Property="Background" Value="#0C1119" />
+                                        <Setter Property="FontFamily" Value="Segoe UI" />
+                                    </Style>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
 
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Level" FontSize="11" Foreground="#8A96A8"
                                        FontFamily="Segoe UI" VerticalAlignment="Center" />

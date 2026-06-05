@@ -1,3 +1,4 @@
+using WolfNETRadio.Network;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,6 +17,8 @@ public partial class MainWindow : Window
     private CommandCenter? _commandCenter;
     private readonly AudioInputManager _audioIn;
     private readonly AudioOutputManager _audioOut;
+    private readonly GwReconAuthClient _authClient;
+    private List<MissionPreset> _loadedPresets = [];
 
     public MainWindow()
     {
@@ -23,6 +26,7 @@ public partial class MainWindow : Window
         DataContext = App.Services.GetRequiredService<MainViewModel>();
         _audioIn = App.Services.GetRequiredService<AudioInputManager>();
         _audioOut = App.Services.GetRequiredService<AudioOutputManager>();
+        _authClient = App.Services.GetRequiredService<GwReconAuthClient>();
 
         var vm = (MainViewModel)DataContext;
 
@@ -137,4 +141,61 @@ public partial class MainWindow : Window
         else
             _ = vm.ConnectCommand.ExecuteAsync(null);
     }
+    private async void RefreshPresets_Click(object sender, RoutedEventArgs e)
+    {
+        var vm = (MainViewModel)DataContext;
+        if (string.IsNullOrWhiteSpace(vm.RadioAccessKey)) return;
+
+        RefreshPresetsButton.IsEnabled = false;
+        RefreshPresetsButton.Content = "...";
+        _loadedPresets = await _authClient.GetMissionsAsync(vm.RadioAccessKey);
+        MissionPresetsCombo.Items.Clear();
+        foreach (var m in _loadedPresets)
+            MissionPresetsCombo.Items.Add(m.MissionName);
+        if (MissionPresetsCombo.Items.Count > 0) MissionPresetsCombo.SelectedIndex = 0;
+        RefreshPresetsButton.Content = "REFRESH";
+        RefreshPresetsButton.IsEnabled = true;
+    }
+
+    private void MissionPresetsCombo_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        var idx = MissionPresetsCombo.SelectedIndex;
+        if (idx < 0 || idx >= _loadedPresets.Count) return;
+        var mission = _loadedPresets[idx];
+
+        PresetChannelsList.Items.Clear();
+        foreach (var ch in mission.Channels)
+        {
+            var border = new System.Windows.Controls.Border
+            {
+                Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x0C, 0x11, 0x19)),
+                BorderBrush = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x1E, 0x2A, 0x3A)),
+                BorderThickness = new System.Windows.Thickness(1),
+                Padding = new System.Windows.Thickness(8, 4, 8, 4),
+                Margin = new System.Windows.Thickness(0, 2, 0, 0),
+                Cursor = System.Windows.Input.Cursors.Hand
+            };
+            var label = new System.Windows.Controls.TextBlock
+            {
+                Text = $"[{ch.Code:D4}] {ch.Label}  →  Slot {ch.Slot}",
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x4F, 0xC3, 0xF7)),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+                FontSize = 11
+            };
+            border.Child = label;
+            // Click to apply preset to that slot
+            var capturedCh = ch;
+            border.MouseDown += (_, _) =>
+            {
+                var vm = (MainViewModel)DataContext;
+                if (capturedCh.Slot >= 0 && capturedCh.Slot < vm.RadioSlots.Length)
+                    vm.RadioSlots[capturedCh.Slot - 1].CommitChannelCode(capturedCh.Code.ToString());
+            };
+            PresetChannelsList.Items.Add(border);
+        }
+    }
+
 }

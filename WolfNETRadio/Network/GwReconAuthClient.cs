@@ -17,10 +17,8 @@ public class GwReconAuthClient
         try
         {
             _http.Timeout = TimeSpan.FromSeconds(10);
-            using var request = new HttpRequestMessage(HttpMethod.Post, VALIDATE_URL);
+            using var request = new HttpRequestMessage(HttpMethod.Get, VALIDATE_URL);
             request.Headers.Add("X-Radio-Key", radioAccessKey);
-            var payload = JsonSerializer.Serialize(new { key = radioAccessKey });
-            request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
 
             using var response = await _http.SendAsync(request);
             if (!response.IsSuccessStatusCode)
@@ -43,4 +41,46 @@ public class GwReconAuthClient
             return new AuthResult(false, string.Empty, 0, ex.Message);
         }
     }
+    public async Task<List<MissionPreset>> GetMissionsAsync(string radioAccessKey)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get,
+                "https://gwrecon.com/comms/api/radio/my-missions");
+            request.Headers.Add("X-Radio-Key", radioAccessKey);
+            using var response = await _http.SendAsync(request);
+            if (!response.IsSuccessStatusCode) return [];
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            var missions = new List<MissionPreset>();
+            if (!doc.RootElement.TryGetProperty("missions", out var arr)) return missions;
+
+            foreach (var m in arr.EnumerateArray())
+            {
+                var name = m.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
+                var channels = new List<ChannelPreset>();
+                if (m.TryGetProperty("channels", out var ch))
+                {
+                    foreach (var c2 in ch.EnumerateArray())
+                    {
+                        var code = c2.TryGetProperty("code", out var co) ? co.GetInt32() : 0;
+                        var label = c2.TryGetProperty("label", out var l) ? l.GetString() ?? "" : "";
+                        var slot = c2.TryGetProperty("slot", out var s) ? s.GetInt32() : 1;
+                        channels.Add(new ChannelPreset(code, label, slot));
+                    }
+                }
+                missions.Add(new MissionPreset(name, channels));
+            }
+            return missions;
+        }
+        catch { return []; }
+    }
+
 }
+
+// ── Server preset fetching ────────────────────────────────────────────────────
+
+public record MissionPreset(string MissionName, List<ChannelPreset> Channels);
+public record ChannelPreset(int Code, string Label, int Slot);
+
