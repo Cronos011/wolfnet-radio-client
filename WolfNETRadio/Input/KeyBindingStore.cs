@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Windows.Input;
+using WpfKey = System.Windows.Input.Key;
 
 namespace WolfNETRadio.Input;
 
@@ -22,7 +22,7 @@ public class InputTrigger
 
     // Keyboard
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public Key? KeyboardKey { get; set; }
+    public WpfKey? KeyboardKey { get; set; }
 
     // Mouse — VK virtual key code (e.g. VK_LBUTTON=1, RBUTTON=2, MBUTTON=4, XBUTTON1=5, XBUTTON2=6)
     public int MouseVk { get; set; }
@@ -66,8 +66,8 @@ public class PttBinding
     [JsonIgnore] public string ModifierKeyDisplay => Modifier?.Display ?? "None";
 
     // Legacy keyboard-only helpers so existing code that checks Key? keeps working
-    [JsonIgnore] public Key? PrimaryKey  => Primary?.DeviceType  == InputDeviceType.Keyboard ? Primary.KeyboardKey   : null;
-    [JsonIgnore] public Key? ModifierKey => Modifier?.DeviceType == InputDeviceType.Keyboard ? Modifier.KeyboardKey  : null;
+    [JsonIgnore] public WpfKey? PrimaryKey  => Primary?.DeviceType  == InputDeviceType.Keyboard ? Primary.KeyboardKey   : null;
+    [JsonIgnore] public WpfKey? ModifierKey => Modifier?.DeviceType == InputDeviceType.Keyboard ? Modifier.KeyboardKey  : null;
 }
 
 // ── Binding store ────────────────────────────────────────────────────────────
@@ -111,8 +111,8 @@ public class KeyBindingStore
     }
 
     // Legacy keyboard-only setters (used by old capture code)
-    public void SetPrimary(int radioId, Key key)  => SetPrimary(radioId,  new InputTrigger { DeviceType = InputDeviceType.Keyboard, KeyboardKey = key });
-    public void SetModifier(int radioId, Key key) => SetModifier(radioId, new InputTrigger { DeviceType = InputDeviceType.Keyboard, KeyboardKey = key });
+    public void SetPrimary(int radioId, WpfKey key)  => SetPrimary(radioId,  new InputTrigger { DeviceType = InputDeviceType.Keyboard, KeyboardKey = key });
+    public void SetModifier(int radioId, WpfKey key) => SetModifier(radioId, new InputTrigger { DeviceType = InputDeviceType.Keyboard, KeyboardKey = key });
 
     public void ClearPrimary(int radioId)
     {

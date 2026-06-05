@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows.Input;
+using WpfKey = System.Windows.Input.Key;
 using Vortice.DirectInput;
 
 namespace WolfNETRadio.Input;
@@ -25,6 +25,8 @@ public class PTTManager : IDisposable
     // ── Keyboard hook ────────────────────────────────────────────────────────
     private nint _kbHook = nint.Zero;
     private Win32.LowLevelKeyboardProc? _kbProc;
+    // alias to avoid ambiguity with Vortice.DirectInput.Key
+    private static WpfKey KeyFromVk(int vk) => System.Windows.Input.KeyInterop.KeyFromVirtualKey(vk);
 
     // ── Mouse hook ───────────────────────────────────────────────────────────
     private nint _mouseHook = nint.Zero;
@@ -88,7 +90,7 @@ public class PTTManager : IDisposable
             if (isDown || isUp)
             {
                 var info = Marshal.PtrToStructure<Win32.KBDLLHOOKSTRUCT>(lParam);
-                var key  = KeyInterop.KeyFromVirtualKey((int)info.vkCode);
+                var key  = KeyFromVk((int)info.vkCode);
                 HandleTrigger(InputDeviceType.Keyboard, keyboardKey: key, isDown: isDown);
             }
         }
@@ -204,7 +206,7 @@ public class PTTManager : IDisposable
 
     private void HandleTrigger(
         InputDeviceType deviceType,
-        Key keyboardKey = Key.None,
+        WpfKey keyboardKey = WpfKey.None,
         int mouseVk = 0,
         Guid joystickGuid = default,
         int joystickBtn = 0,
@@ -224,7 +226,7 @@ public class PTTManager : IDisposable
 
             bool matches = trigger.DeviceType == deviceType && deviceType switch
             {
-                InputDeviceType.Keyboard => trigger.KeyboardKey == keyboardKey,
+                InputDeviceType.Keyboard => (trigger.KeyboardKey ?? WpfKey.None) == keyboardKey,
                 InputDeviceType.Mouse    => trigger.MouseVk      == mouseVk,
                 InputDeviceType.Joystick => trigger.JoystickGuid == joystickGuid
                                          && trigger.JoystickButton == joystickBtn,
@@ -252,7 +254,7 @@ public class PTTManager : IDisposable
         return t.DeviceType switch
         {
             InputDeviceType.Keyboard => (Win32.GetAsyncKeyState(
-                KeyInterop.VirtualKeyFromKey(t.KeyboardKey ?? Key.None)) & 0x8000) != 0,
+                System.Windows.Input.KeyInterop.VirtualKeyFromKey(t.KeyboardKey ?? WpfKey.None)) & 0x8000) != 0,
             InputDeviceType.Mouse    => (Win32.GetAsyncKeyState(t.MouseVk) & 0x8000) != 0,
             InputDeviceType.Joystick =>
                 _joyBtnState.GetValueOrDefault((t.JoystickGuid, t.JoystickButton), false),
