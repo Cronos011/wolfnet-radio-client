@@ -164,10 +164,9 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Channel A button -->
+                <!-- Channel A button (active when IsChannelA=True) -->
                 <Button x:Name="PART_ChABtn" Grid.Column="0"
                         Width="18" Height="13"
-                        Style="{StaticResource ChBtnBase}"
                         Content="A" Click="ChABtn_Click">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource ChBtnBase}">
@@ -182,10 +181,9 @@
                     </Button.Style>
                 </Button>
 
-                <!-- Channel B button -->
+                <!-- Channel B button (active when IsChannelA=False) -->
                 <Button x:Name="PART_ChBBtn" Grid.Column="1"
                         Width="18" Height="13"
-                        Style="{StaticResource ChBtnBase}"
                         Content="B" Margin="1,0,0,0" Click="ChBBtn_Click">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource ChBtnBase}">
