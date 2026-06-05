@@ -54,6 +54,14 @@ public partial class RadioSlotControl : UserControl
         set => SetValue(IsTransmittingProperty, value);
     }
 
+    public static readonly DependencyProperty IsReceivingProperty =
+        DependencyProperty.Register(nameof(IsReceiving), typeof(bool), typeof(RadioSlotControl), new PropertyMetadata(false));
+    public bool IsReceiving
+    {
+        get => (bool)GetValue(IsReceivingProperty);
+        set => SetValue(IsReceivingProperty, value);
+    }
+
     public static readonly DependencyProperty SlotLabelTextProperty =
         DependencyProperty.Register(nameof(SlotLabelText), typeof(string), typeof(RadioSlotControl), new PropertyMetadata(string.Empty));
 
