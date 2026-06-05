@@ -9,6 +9,7 @@ using WolfNETRadio.Audio;
 using WolfNETRadio.ViewModels;
 using WolfNETRadio.Views.Overlays;
 using WolfNETRadio.Input;
+using WolfNETRadio.Models;
 using System.Linq;
 
 namespace WolfNETRadio.Views;
@@ -35,34 +36,55 @@ public partial class MainWindow : Window
 
         var vm = (MainViewModel)DataContext;
 
-        // Sync text fields
+        // ── Restore persisted settings ───────────────────────────────────────
+        var settings = AppSettings.Load();
+        settings.ApplyTo(ClientState.Instance);
+
+        // Sync text fields from (potentially restored) state
         RadioAccessKeyBox.Text = vm.RadioAccessKey;
         ServerAddressBox.Text = vm.ServerAddress;
         RadioAccessKeyBox.TextChanged += (_, _) => vm.RadioAccessKey = RadioAccessKeyBox.Text;
         ServerAddressBox.TextChanged += (_, _) => vm.ServerAddress = ServerAddressBox.Text;
 
-        // Populate audio device dropdowns
-        foreach (var d in _audioIn.GetInputDevices())
-            InputDeviceCombo.Items.Add(d);
-        if (InputDeviceCombo.Items.Count > 0) InputDeviceCombo.SelectedIndex = 0;
-
-        foreach (var d in _audioOut.GetOutputDevices())
-            OutputDeviceCombo.Items.Add(d);
-        if (OutputDeviceCombo.Items.Count > 0) OutputDeviceCombo.SelectedIndex = 0;
-
+        // ── Audio device dropdowns ───────────────────────────────────────────
+        // IMPORTANT: wire SelectionChanged BEFORE setting SelectedIndex so the
+        // ViewModel is updated when the initial selection fires.
         InputDeviceCombo.SelectionChanged += (_, _) =>
             vm.SelectedInputDevice = InputDeviceCombo.SelectedItem?.ToString();
         OutputDeviceCombo.SelectionChanged += (_, _) =>
             vm.SelectedOutputDevice = OutputDeviceCombo.SelectedItem?.ToString();
 
+        // Populate input devices; restore saved selection or default to first
+        var inputDevices  = _audioIn.GetInputDevices().ToList();
+        foreach (var d in inputDevices) InputDeviceCombo.Items.Add(d);
+        if (inputDevices.Count > 0)
+        {
+            var savedInput = settings.InputDeviceName;
+            var savedIdx   = inputDevices.IndexOf(savedInput);
+            InputDeviceCombo.SelectedIndex = savedIdx >= 0 ? savedIdx : 0;
+        }
+
+        // Populate output devices; restore saved selection or default to first
+        var outputDevices = _audioOut.GetOutputDevices().ToList();
+        foreach (var d in outputDevices) OutputDeviceCombo.Items.Add(d);
+        if (outputDevices.Count > 0)
+        {
+            var savedOutput = settings.OutputDeviceName;
+            var savedIdx    = outputDevices.IndexOf(savedOutput);
+            OutputDeviceCombo.SelectedIndex = savedIdx >= 0 ? savedIdx : 0;
+        }
+
         BuildKeyBindingRows();
 
-        // Wire settings toggles to ViewModel
-        RadioEffectsCheck.Checked += (_, _) => vm.RadioEffectsEnabled = true;
+        // Wire settings toggles to ViewModel + restore persisted values
+        RadioEffectsCheck.IsChecked = settings.RadioEffects;
+        RadioEffectsCheck.Checked   += (_, _) => vm.RadioEffectsEnabled = true;
         RadioEffectsCheck.Unchecked += (_, _) => vm.RadioEffectsEnabled = false;
 
+        SpeakerVolumeSlider.Value = settings.SpeakerVolume * 100.0;
+        MicBoostSlider.Value      = settings.MicVolume * 100.0;
         SpeakerVolumeSlider.ValueChanged += (_, e) => vm.SpeakerVolume = (float)(e.NewValue / 100.0);
-        MicBoostSlider.ValueChanged += (_, e) => vm.MicVolume = (float)(e.NewValue / 100.0);
+        MicBoostSlider.ValueChanged      += (_, e) => vm.MicVolume      = (float)(e.NewValue / 100.0);
 
         AlwaysOnTopCheck.Checked += (_, _) => { if (_commsOverlay != null) _commsOverlay.Topmost = true; if (_commandCenter != null) _commandCenter.Topmost = true; };
         AlwaysOnTopCheck.Unchecked += (_, _) => { if (_commsOverlay != null) _commsOverlay.Topmost = false; if (_commandCenter != null) _commandCenter.Topmost = false; };
@@ -333,6 +355,15 @@ public partial class MainWindow : Window
 
     private void CommandCenterButton_Unchecked(object sender, RoutedEventArgs e)
         => _commandCenter?.Hide();
+
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        // Persist settings on every close
+        var settings = new AppSettings();
+        settings.SnapshotFrom(ClientState.Instance);
+        settings.Save();
+        base.OnClosing(e);
+    }
 
     private void ConnectButton_Click(object sender, RoutedEventArgs e)
     {
