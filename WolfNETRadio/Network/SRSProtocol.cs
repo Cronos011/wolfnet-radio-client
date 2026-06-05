@@ -59,7 +59,7 @@ public class SRSRadioInfo
             info.Radios.Add(new SRSRadio
             {
                 Freq = slot.FrequencyHz,
-                Modulation = 0, // CHANNEL
+                Modulation = slot.IsActive ? 0 : 4,  // 0=CHANNEL, 4=DISABLED when !IsActive
                 Retransmit = slot.IsRetransmit,
                 Volume = slot.Volume,
             });

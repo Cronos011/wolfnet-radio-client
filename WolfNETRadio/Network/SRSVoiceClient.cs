@@ -20,7 +20,7 @@ public class SRSVoiceClient : IDisposable
     private ulong _packetId;
 
     // Events
-    public event Action<float[], string>? AudioReceived; // (pcmSamples, fromGuid)
+    public event Action<float[], string, double[]>? AudioReceived; // (pcmSamples, fromGuid, frequencies)
 
     private OpusEncoder? _encoder;
     private OpusDecoder? _decoder;
@@ -141,6 +141,7 @@ public class SRSVoiceClient : IDisposable
 
                 var metaJson = Encoding.UTF8.GetString(buffer, jsonStart, buffer.Length - jsonStart);
                 string fromGuid = headerGuid;
+                double[] frequencies = [];
                 try
                 {
                     using var doc = JsonDocument.Parse(metaJson);
@@ -151,6 +152,12 @@ public class SRSVoiceClient : IDisposable
                     else if (doc.RootElement.TryGetProperty("clientGuid", out var cg2))
                     {
                         fromGuid = cg2.GetString() ?? fromGuid;
+                    }
+
+                    if (doc.RootElement.TryGetProperty("Frequencies", out var freqProp))
+                    {
+                        frequencies = freqProp.EnumerateArray()
+                            .Select(f => f.GetDouble()).ToArray();
                     }
                 }
                 catch (JsonException)
@@ -168,7 +175,7 @@ public class SRSVoiceClient : IDisposable
                     pcm = trimmed;
                 }
 
-                AudioReceived?.Invoke(pcm, fromGuid);
+                AudioReceived?.Invoke(pcm, fromGuid, frequencies);
             }
         }
         catch (OperationCanceledException)

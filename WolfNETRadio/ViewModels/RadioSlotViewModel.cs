@@ -39,6 +39,41 @@ public partial class RadioSlotViewModel : ObservableObject
             _ = _control.SendUpdateAsync();
         }
     }
+
+    public int ChannelACode
+    {
+        get => _slot.ChannelACode;
+        set { _slot.ChannelACode = value; OnPropertyChanged(); OnPropertyChanged(nameof(ChannelCode)); }
+    }
+
+    public int ChannelBCode
+    {
+        get => _slot.ChannelBCode;
+        set { _slot.ChannelBCode = value; OnPropertyChanged(); OnPropertyChanged(nameof(ChannelCode)); }
+    }
+
+    public bool IsChannelA => _slot.IsChannelA;
+
+    public RadioSlot.RadioMode Mode
+    {
+        get => _slot.Mode;
+        set { _slot.Mode = value; OnPropertyChanged(); }
+    }
+
+    public RadioSlot.RadioPan Pan
+    {
+        get => _slot.Pan;
+        set { _slot.Pan = value; OnPropertyChanged(); }
+    }
+
+    public bool IsSlotActive
+    {
+        get => _slot.IsActive;
+        set { _slot.IsActive = value; OnPropertyChanged(); _ = _control.SendUpdateAsync(); }
+    }
+
+    public string ReceivingCallsign => _slot.ReceivingCallsign;
+
     public bool IsSelected => _slot.IsSelected;
     public bool IsTransmitting => _slot.IsTransmitting;
     public bool IsReceiving => _slot.IsReceiving;
@@ -65,6 +100,16 @@ public partial class RadioSlotViewModel : ObservableObject
     public void StepChannel(int delta)
     {
         _slot.ChannelCode = Math.Clamp(_slot.ChannelCode + delta, 0, 9999);
+        _ = _control.SendUpdateAsync();
+    }
+
+    [RelayCommand]
+    public void SwitchChannel()
+    {
+        _slot.SwitchChannel();
+        OnPropertyChanged(nameof(ChannelCode));
+        OnPropertyChanged(nameof(IsChannelA));
+        OnPropertyChanged(nameof(DisplayCode));
         _ = _control.SendUpdateAsync();
     }
 

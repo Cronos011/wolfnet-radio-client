@@ -37,8 +37,15 @@ public partial class MainViewModel : ObservableObject
         // Wire PTT → voice send
         _ptt.PTTStateChanged += OnPTTStateChanged;
 
+        // Wire channel switch
+        _ptt.ChannelSwitchRequested += radioId =>
+        {
+            if (radioId >= 1 && radioId <= 10)
+                _state.Radios[radioId].SwitchChannel();
+        };
+
         // Wire received audio → output
-        _voice.AudioReceived += (pcm, guid) => _audioOut.PlayAudio(guid, pcm);
+        _voice.AudioReceived += OnAudioReceived;
 
         // Wire mic frames → encode + send when PTT active
         _audioIn.FrameReady += OnMicFrame;
@@ -188,6 +195,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     private readonly HashSet<int> _activeTransmitRadios = [];
+    private readonly Dictionary<int, System.Timers.Timer> _voxHangTimers = [];
 
     private void OnPTTStateChanged(int radioId, bool pressed)
     {
@@ -198,10 +206,113 @@ public partial class MainViewModel : ObservableObject
         else _activeTransmitRadios.Remove(radioId);
     }
 
+    private void OnAudioReceived(float[] pcm, string fromGuid, double[] frequencies)
+    {
+        // Find which radio slot this frequency matches
+        int matchedSlot = -1;
+        float pan = 0.0f;
+        for (int i = 1; i <= 10; i++)
+        {
+            var slot = _state.Radios[i];
+            if (!slot.IsActive) continue;
+            foreach (var freq in frequencies)
+            {
+                if (Math.Abs(slot.FrequencyHz - freq) < 500.0)  // within 500Hz
+                {
+                    matchedSlot = i;
+                    pan = slot.Pan switch
+                    {
+                        RadioSlot.RadioPan.Left  => -1.0f,
+                        RadioSlot.RadioPan.Right => +1.0f,
+                        _ => 0.0f
+                    };
+                    break;
+                }
+            }
+            if (matchedSlot >= 0) break;
+        }
+
+        // Play audio with pan
+        _audioOut.PlayAudio(fromGuid, pan, pcm);
+
+        // Update RX status
+        if (matchedSlot >= 0)
+        {
+            var slot = _state.Radios[matchedSlot];
+            slot.IsReceiving = true;
+            var name = _control.GetClientName(fromGuid);
+            slot.ReceivingCallsign = name;
+            // Clear after 500ms of no packets
+            _ = ClearReceiveAfterDelay(matchedSlot, fromGuid, 500);
+        }
+    }
+
+    private async Task ClearReceiveAfterDelay(int slotIdx, string guid, int ms)
+    {
+        await Task.Delay(ms);
+        if (slotIdx >= 0 && slotIdx < _state.Radios.Length)
+        {
+            var slot = _state.Radios[slotIdx];
+            slot.IsReceiving = false;
+            slot.ReceivingCallsign = string.Empty;
+        }
+    }
+
     private void OnMicFrame(float[] pcm)
     {
-        if (_activeTransmitRadios.Count == 0) return;
-        _voice.SendAudio(pcm, _activeTransmitRadios.ToArray());
+        // Passthrough test
+        if (_audioOut.IsPassthroughActive) _audioOut.PlayPassthrough(pcm);
+
+        // PTT radios
+        if (_activeTransmitRadios.Count > 0)
+            _voice.SendAudio(pcm, _activeTransmitRadios.ToArray());
+
+        // VOX radios
+        var rms = ComputeRms(pcm);
+        VuLevel = rms;
+        var voxActive = rms > _state.VoxThreshold;
+        for (int i = 0; i <= 10; i++)
+        {
+            var slot = _state.Radios[i];
+            if (slot.Mode != RadioSlot.RadioMode.VOX) continue;
+            HandleVoxState(i, voxActive);
+        }
+    }
+
+    private void HandleVoxState(int radioId, bool triggered)
+    {
+        if (triggered)
+        {
+            if (_voxHangTimers.TryGetValue(radioId, out var t)) { t.Stop(); t.Dispose(); _voxHangTimers.Remove(radioId); }
+            if (_state.Radios[radioId].IsTransmitting == false)
+            {
+                _state.Radios[radioId].IsTransmitting = true;
+                _activeTransmitRadios.Add(radioId);
+            }
+        }
+        else
+        {
+            if (!_state.Radios[radioId].IsTransmitting) return;
+            if (!_voxHangTimers.ContainsKey(radioId))
+            {
+                var t = new System.Timers.Timer(_state.VoxHangtimeMs) { AutoReset = false };
+                t.Elapsed += (_, _) =>
+                {
+                    _state.Radios[radioId].IsTransmitting = false;
+                    _activeTransmitRadios.Remove(radioId);
+                    _voxHangTimers.Remove(radioId);
+                };
+                _voxHangTimers[radioId] = t;
+                t.Start();
+            }
+        }
+    }
+
+    private static float ComputeRms(float[] pcm)
+    {
+        float sum = 0;
+        foreach (var s in pcm) sum += s * s;
+        return MathF.Sqrt(sum / pcm.Length);
     }
 
     public bool CommsOverlayVisible
@@ -214,5 +325,17 @@ public partial class MainViewModel : ObservableObject
     {
         get => _state.CommandCenterVisible;
         set { _state.CommandCenterVisible = value; OnPropertyChanged(); }
+    }
+
+    public float VoxThreshold
+    {
+        get => _state.VoxThreshold;
+        set { _state.VoxThreshold = value; OnPropertyChanged(); }
+    }
+
+    public int VoxHangtimeMs
+    {
+        get => _state.VoxHangtimeMs;
+        set { _state.VoxHangtimeMs = value; OnPropertyChanged(); }
     }
 }

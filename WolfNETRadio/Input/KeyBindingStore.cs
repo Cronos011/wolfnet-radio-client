@@ -58,16 +58,34 @@ public class PttBinding
 {
     public int RadioId { get; set; }
     public string RadioLabel { get; set; } = string.Empty;
+
+    // Primary PTT (with optional modifier)
     public InputTrigger? Primary { get; set; }
-    public InputTrigger? Modifier { get; set; }
+    public InputTrigger? PrimaryModifier { get; set; }
+
+    // Secondary PTT (independent — either fires the radio, with optional modifier)
+    public InputTrigger? Secondary { get; set; }
+    public InputTrigger? SecondaryModifier { get; set; }
 
     // Legacy display helpers for UI
-    [JsonIgnore] public string PrimaryKeyDisplay  => Primary?.Display  ?? "[UNBOUND]";
-    [JsonIgnore] public string ModifierKeyDisplay => Modifier?.Display ?? "None";
+    [JsonIgnore] public string PrimaryDisplay => Primary?.Display ?? "[UNBOUND]";
+    [JsonIgnore] public string PrimaryModDisplay => PrimaryModifier?.Display ?? "None";
+    [JsonIgnore] public string SecondaryDisplay => Secondary?.Display ?? "[UNBOUND]";
+    [JsonIgnore] public string SecondaryModDisplay => SecondaryModifier?.Display ?? "None";
 
     // Legacy keyboard-only helpers so existing code that checks Key? keeps working
-    [JsonIgnore] public WpfKey? PrimaryKey  => Primary?.DeviceType  == InputDeviceType.Keyboard ? Primary.KeyboardKey   : null;
-    [JsonIgnore] public WpfKey? ModifierKey => Modifier?.DeviceType == InputDeviceType.Keyboard ? Modifier.KeyboardKey  : null;
+    [JsonIgnore] public WpfKey? PrimaryKey => Primary?.DeviceType == InputDeviceType.Keyboard ? Primary.KeyboardKey : null;
+    [JsonIgnore] public WpfKey? ModifierKey => PrimaryModifier?.DeviceType == InputDeviceType.Keyboard ? PrimaryModifier.KeyboardKey : null;
+}
+
+// ── Channel switch binding ────────────────────────────────────────────────────────
+
+public class ChannelSwitchBinding
+{
+    public int RadioId { get; set; }        // 1-10
+    public string RadioLabel { get; set; } = string.Empty;
+    public InputTrigger? SwitchTrigger { get; set; }
+    [JsonIgnore] public string SwitchDisplay => SwitchTrigger?.Display ?? "[UNBOUND]";
 }
 
 // ── Binding store ────────────────────────────────────────────────────────────
@@ -79,12 +97,15 @@ public class KeyBindingStore
         "WolfNET Radio", "keybindings.json");
 
     private List<PttBinding> _bindings = [];
+    private List<ChannelSwitchBinding> _switchBindings = [];
 
     public IReadOnlyList<PttBinding> Bindings => _bindings;
+    public IReadOnlyList<ChannelSwitchBinding> SwitchBindings => _switchBindings;
 
     public KeyBindingStore()
     {
         _bindings = BuildDefaults();
+        _switchBindings = BuildSwitchDefaults();
         Load();
     }
 
@@ -98,21 +119,40 @@ public class KeyBindingStore
         return list;
     }
 
+    private static List<ChannelSwitchBinding> BuildSwitchDefaults() =>
+        Enumerable.Range(1, 10)
+            .Select(i => new ChannelSwitchBinding { RadioId = i, RadioLabel = $"RADIO {i} A↔B" })
+            .ToList();
+
     public void SetPrimary(int radioId, InputTrigger trigger)
     {
         var b = _bindings.FirstOrDefault(x => x.RadioId == radioId);
         if (b != null) { b.Primary = trigger; Save(); }
     }
 
-    public void SetModifier(int radioId, InputTrigger trigger)
+    public void SetPrimaryModifier(int radioId, InputTrigger trigger)
     {
         var b = _bindings.FirstOrDefault(x => x.RadioId == radioId);
-        if (b != null) { b.Modifier = trigger; Save(); }
+        if (b != null) { b.PrimaryModifier = trigger; Save(); }
+    }
+
+    public void SetSecondary(int radioId, InputTrigger trigger)
+    {
+        var b = _bindings.FirstOrDefault(x => x.RadioId == radioId);
+        if (b != null) { b.Secondary = trigger; Save(); }
+    }
+
+    public void SetSecondaryModifier(int radioId, InputTrigger trigger)
+    {
+        var b = _bindings.FirstOrDefault(x => x.RadioId == radioId);
+        if (b != null) { b.SecondaryModifier = trigger; Save(); }
     }
 
     // Legacy keyboard-only setters (used by old capture code)
     public void SetPrimary(int radioId, WpfKey key)  => SetPrimary(radioId,  new InputTrigger { DeviceType = InputDeviceType.Keyboard, KeyboardKey = key });
-    public void SetModifier(int radioId, WpfKey key) => SetModifier(radioId, new InputTrigger { DeviceType = InputDeviceType.Keyboard, KeyboardKey = key });
+
+    public void SetModifier(int radioId, InputTrigger trigger) => SetPrimaryModifier(radioId, trigger);
+    public void SetModifier(int radioId, WpfKey key) => SetPrimaryModifier(radioId, new InputTrigger { DeviceType = InputDeviceType.Keyboard, KeyboardKey = key });
 
     public void ClearPrimary(int radioId)
     {
@@ -120,10 +160,37 @@ public class KeyBindingStore
         if (b != null) { b.Primary = null; Save(); }
     }
 
-    public void ClearModifier(int radioId)
+    public void ClearPrimaryModifier(int radioId)
     {
         var b = _bindings.FirstOrDefault(x => x.RadioId == radioId);
-        if (b != null) { b.Modifier = null; Save(); }
+        if (b != null) { b.PrimaryModifier = null; Save(); }
+    }
+
+    public void ClearSecondary(int radioId)
+    {
+        var b = _bindings.FirstOrDefault(x => x.RadioId == radioId);
+        if (b != null) { b.Secondary = null; Save(); }
+    }
+
+    public void ClearSecondaryModifier(int radioId)
+    {
+        var b = _bindings.FirstOrDefault(x => x.RadioId == radioId);
+        if (b != null) { b.SecondaryModifier = null; Save(); }
+    }
+
+    public void ClearModifier(int radioId) => ClearPrimaryModifier(radioId);
+
+    // Channel switch bindings
+    public void SetSwitchTrigger(int radioId, InputTrigger trigger)
+    {
+        var b = _switchBindings.FirstOrDefault(x => x.RadioId == radioId);
+        if (b != null) { b.SwitchTrigger = trigger; Save(); }
+    }
+
+    public void ClearSwitchTrigger(int radioId)
+    {
+        var b = _switchBindings.FirstOrDefault(x => x.RadioId == radioId);
+        if (b != null) { b.SwitchTrigger = null; Save(); }
     }
 
     public void Load()
@@ -132,12 +199,47 @@ public class KeyBindingStore
         {
             if (!File.Exists(SettingsPath)) return;
             var opts = new JsonSerializerOptions { Converters = { new JsonStringEnumConverter() } };
-            var saved = JsonSerializer.Deserialize<List<PttBinding>>(File.ReadAllText(SettingsPath), opts);
-            if (saved == null) return;
-            foreach (var s in saved)
+            var json = File.ReadAllText(SettingsPath);
+            
+            // Try loading as wrapper with both PTT and switch bindings
+            var wrapper = JsonSerializer.Deserialize<BindingWrapper>(json, opts);
+            if (wrapper != null)
             {
-                var b = _bindings.FirstOrDefault(x => x.RadioId == s.RadioId);
-                if (b != null) { b.Primary = s.Primary; b.Modifier = s.Modifier; }
+                if (wrapper.PttBindings != null)
+                {
+                    foreach (var s in wrapper.PttBindings)
+                    {
+                        var b = _bindings.FirstOrDefault(x => x.RadioId == s.RadioId);
+                        if (b != null)
+                        {
+                            b.Primary = s.Primary;
+                            b.PrimaryModifier = s.PrimaryModifier;
+                            b.Secondary = s.Secondary;
+                            b.SecondaryModifier = s.SecondaryModifier;
+                        }
+                    }
+                }
+                if (wrapper.SwitchBindings != null)
+                {
+                    foreach (var s in wrapper.SwitchBindings)
+                    {
+                        var b = _switchBindings.FirstOrDefault(x => x.RadioId == s.RadioId);
+                        if (b != null) { b.SwitchTrigger = s.SwitchTrigger; }
+                    }
+                }
+            }
+            else
+            {
+                // Fall back to loading as List<PttBinding> for backward compat
+                var saved = JsonSerializer.Deserialize<List<PttBinding>>(json, opts);
+                if (saved != null)
+                {
+                    foreach (var s in saved)
+                    {
+                        var b = _bindings.FirstOrDefault(x => x.RadioId == s.RadioId);
+                        if (b != null) { b.Primary = s.Primary; b.PrimaryModifier = s.PrimaryModifier; }
+                    }
+                }
             }
         }
         catch { }
@@ -149,8 +251,16 @@ public class KeyBindingStore
         {
             Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
             var opts = new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
-            File.WriteAllText(SettingsPath, JsonSerializer.Serialize(_bindings, opts));
+            var wrapper = new BindingWrapper { PttBindings = _bindings, SwitchBindings = _switchBindings };
+            File.WriteAllText(SettingsPath, JsonSerializer.Serialize(wrapper, opts));
         }
         catch { }
+    }
+
+    // ── Serialization wrapper ────────────────────────────────────────────
+    private class BindingWrapper
+    {
+        public List<PttBinding>? PttBindings { get; set; }
+        public List<ChannelSwitchBinding>? SwitchBindings { get; set; }
     }
 }

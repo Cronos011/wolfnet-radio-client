@@ -19,7 +19,12 @@ public partial class ClientState : ObservableObject
 
     // Radios: index 0=intercom, 1-10=ops
     public RadioSlot[] Radios { get; } = Enumerable.Range(0, 11)
-        .Select(i => new RadioSlot { RadioId = i, Label = i == 0 ? "INTERCOM" : $"CH-{i}" })
+        .Select(i => new RadioSlot
+        {
+            RadioId = i,
+            Label = i == 0 ? "INTERCOM" : $"CH-{i}",
+            Pan = i == 1 ? RadioSlot.RadioPan.Left : i == 2 ? RadioSlot.RadioPan.Right : RadioSlot.RadioPan.Both
+        })
         .ToArray();
 
     // Connected clients on server
@@ -36,6 +41,10 @@ public partial class ClientState : ObservableObject
     [ObservableProperty] private float _micVolume = 1.0f;
     [ObservableProperty] private float _speakerVolume = 1.0f;
     [ObservableProperty] private bool _radioEffectsEnabled = true;
+
+    // VOX settings
+    [ObservableProperty] private float _voxThreshold = 0.05f;  // 0.0–1.0 RMS
+    [ObservableProperty] private int _voxHangtimeMs = 300;
 
     public bool IsConnected => ServerStatus == ConnectionStatus.Connected;
     public bool IsVoipConnected => VoipStatus == ConnectionStatus.Connected;

@@ -20,8 +20,10 @@ namespace WolfNETRadio.Input;
 public class PTTManager : IDisposable
 {
     private List<PttBinding> _bindings = [];
+    private List<ChannelSwitchBinding> _switchBindings = [];
     private readonly HashSet<int> _activeRadios = [];
     public event Action<int, bool>? PTTStateChanged;
+    public event Action<int>? ChannelSwitchRequested;  // fires radioId on press
 
     // ── Keyboard hook ────────────────────────────────────────────────────────
     private nint _kbHook = nint.Zero;
@@ -41,6 +43,9 @@ public class PTTManager : IDisposable
 
     public void SetBindings(IReadOnlyList<PttBinding> bindings)
         => _bindings = bindings.ToList();
+
+    public void SetSwitchBindings(IReadOnlyList<ChannelSwitchBinding> bindings)
+        => _switchBindings = bindings.ToList();
 
     /// <summary>
     /// Returns a list of connected joystick devices found via WinMM.
@@ -179,11 +184,57 @@ public class PTTManager : IDisposable
         int joyBtn = 0,
         bool isDown = false)
     {
+        // ── PTT Bindings (Primary + Secondary) ────────────────────────────────
         foreach (var binding in _bindings)
         {
-            if (binding.Modifier != null && !IsHeld(binding.Modifier)) continue;
+            bool hit = false;
 
-            var t = binding.Primary;
+            // Check Primary + PrimaryModifier
+            if (binding.Primary != null)
+            {
+                if (binding.PrimaryModifier != null && !IsHeld(binding.PrimaryModifier)) { }
+                else
+                {
+                    var t = binding.Primary;
+                    hit = t.DeviceType == deviceType && deviceType switch
+                    {
+                        InputDeviceType.Keyboard => (t.KeyboardKey ?? WpfKey.None) == keyboardKey,
+                        InputDeviceType.Mouse    => t.MouseVk == mouseVk,
+                        InputDeviceType.Joystick => t.JoystickId == joyId && t.JoystickButton == joyBtn,
+                        _ => false
+                    };
+                }
+            }
+
+            // Check Secondary + SecondaryModifier (if Primary didn't hit)
+            if (!hit && binding.Secondary != null)
+            {
+                if (binding.SecondaryModifier != null && !IsHeld(binding.SecondaryModifier)) { }
+                else
+                {
+                    var t = binding.Secondary;
+                    hit = t.DeviceType == deviceType && deviceType switch
+                    {
+                        InputDeviceType.Keyboard => (t.KeyboardKey ?? WpfKey.None) == keyboardKey,
+                        InputDeviceType.Mouse    => t.MouseVk == mouseVk,
+                        InputDeviceType.Joystick => t.JoystickId == joyId && t.JoystickButton == joyBtn,
+                        _ => false
+                    };
+                }
+            }
+
+            if (!hit) continue;
+
+            if (isDown) { if (_activeRadios.Add(binding.RadioId))    PTTStateChanged?.Invoke(binding.RadioId, true); }
+            else        { if (_activeRadios.Remove(binding.RadioId))  PTTStateChanged?.Invoke(binding.RadioId, false); }
+        }
+
+        // ── Channel Switch Bindings ───────────────────────────────────────
+        if (!isDown) return;  // Channel switch only on press, not release
+
+        foreach (var binding in _switchBindings)
+        {
+            var t = binding.SwitchTrigger;
             if (t == null) continue;
 
             bool hit = t.DeviceType == deviceType && deviceType switch
@@ -193,10 +244,7 @@ public class PTTManager : IDisposable
                 InputDeviceType.Joystick => t.JoystickId == joyId && t.JoystickButton == joyBtn,
                 _ => false
             };
-            if (!hit) continue;
-
-            if (isDown) { if (_activeRadios.Add(binding.RadioId))    PTTStateChanged?.Invoke(binding.RadioId, true); }
-            else        { if (_activeRadios.Remove(binding.RadioId))  PTTStateChanged?.Invoke(binding.RadioId, false); }
+            if (hit) ChannelSwitchRequested?.Invoke(binding.RadioId);
         }
     }
 

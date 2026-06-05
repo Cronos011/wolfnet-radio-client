@@ -36,6 +36,7 @@ public partial class MainWindow : Window
         _authClient = App.Services.GetRequiredService<GwReconAuthClient>();
         _pttManager = App.Services.GetRequiredService<PTTManager>();
         _pttManager.SetBindings(_keyStore.Bindings);
+        _pttManager.SetSwitchBindings(_keyStore.SwitchBindings);
 
         var vm = (MainViewModel)DataContext;
 

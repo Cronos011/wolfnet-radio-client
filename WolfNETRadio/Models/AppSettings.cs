@@ -22,6 +22,8 @@ public class AppSettings
     public float  SpeakerVolume    { get; set; } = 1.0f;
     public bool   RadioEffects     { get; set; } = true;
     public double OverlayOpacity   { get; set; } = 1.0;
+    public float  VoxThreshold     { get; set; } = 0.05f;
+    public int    VoxHangtimeMs    { get; set; } = 300;
 
     // ── Load / Save ───────────────────────────────────────────────────
 
@@ -64,6 +66,8 @@ public class AppSettings
         state.SpeakerVolume       = SpeakerVolume;
         state.RadioEffectsEnabled = RadioEffects;
         state.OverlayOpacity      = OverlayOpacity;
+        state.VoxThreshold        = VoxThreshold;
+        state.VoxHangtimeMs       = VoxHangtimeMs;
     }
 
     /// <summary>
@@ -79,5 +83,7 @@ public class AppSettings
         SpeakerVolume    = state.SpeakerVolume;
         RadioEffects     = state.RadioEffectsEnabled;
         OverlayOpacity   = state.OverlayOpacity;
+        VoxThreshold     = state.VoxThreshold;
+        VoxHangtimeMs    = state.VoxHangtimeMs;
     }
 }

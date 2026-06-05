@@ -17,11 +17,14 @@ public partial class SRSControlClient : ObservableObject, IDisposable
     private readonly ClientState _state;
     public const string CLIENT_VERSION = "2.1.0.4";
     private readonly string _clientGuid = Guid.NewGuid().ToString();
+    private readonly Dictionary<string, string> _clientNames = [];
 
     public event Action<List<SRSClient>>? ClientListUpdated;
     public event Action<Dictionary<string, string>>? ServerSettingsReceived;
 
     public SRSControlClient(ClientState state) => _state = state;
+
+    public string GetClientName(string guid) => _clientNames.GetValueOrDefault(guid, guid[..Math.Min(8, guid.Length)]);
 
     public async Task ConnectAsync(string host, int port)
     {
@@ -108,6 +111,10 @@ public partial class SRSControlClient : ObservableObject, IDisposable
                         {
                             _state.ConnectedClientCount = msg.Clients.Count;
                             UpdateTunedClientCounts(msg.Clients);
+                            // Populate client names dictionary
+                            foreach (var client in msg.Clients)
+                                if (client.ClientGuid != null && client.Name != null)
+                                    _clientNames[client.ClientGuid] = client.Name;
                             ClientListUpdated?.Invoke(msg.Clients);
                         }
                         break;
